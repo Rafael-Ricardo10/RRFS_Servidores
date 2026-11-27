@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS - DNS Seguro</title>
+<style>
+  :root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;
+    --border:#2a2a3a;--accent:#4f8ef7;--accent2:#7c3aed;
+    --text:#e2e8f0;--text2:#94a3b8;--danger:#ef4444;
+    --success:#22c55e;--warning:#f59e0b;--nav-w:240px;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    display:flex;min-height:100vh;}
+  .sidebar{width:var(--nav-w);background:var(--bg2);
+    border-right:1px solid var(--border);display:flex;
+    flex-direction:column;position:fixed;top:0;left:0;
+    height:100vh;z-index:100;overflow-y:auto;}
+  .sidebar-logo{padding:1.25rem;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:0.75rem;flex-shrink:0;}
+  .sidebar-logo .icon{width:40px;height:40px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:10px;display:flex;align-items:center;
+    justify-content:center;font-size:1.2rem;}
+  .sidebar-logo .title{font-size:0.9rem;font-weight:700;}
+  .sidebar-logo .sub{font-size:0.7rem;color:var(--text2);}
+  nav{flex:1;padding:0.75rem 0;}
+  .nav-section{font-size:0.65rem;font-weight:700;color:var(--text2);
+    letter-spacing:0.08em;text-transform:uppercase;
+    padding:0.65rem 1.25rem 0.3rem;}
+  .nav-item{display:flex;align-items:center;gap:0.65rem;
+    padding:0.6rem 1.25rem;color:var(--text2);text-decoration:none;
+    font-size:0.875rem;border-left:3px solid transparent;
+    transition:background 0.15s,color 0.15s;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:var(--bg3);color:var(--accent);
+    border-left-color:var(--accent);}
+  .nav-item .ni{font-size:1rem;width:18px;text-align:center;}
+  .sidebar-bottom{padding:1rem 1.25rem;
+    border-top:1px solid var(--border);}
+  .btn-logout{width:100%;background:#2a0a0a;
+    border:1px solid #5a1a1a;border-radius:8px;padding:0.6rem;
+    color:#f87171;font-size:0.85rem;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;gap:0.5rem;
+    text-decoration:none;}
+  .btn-logout:hover{background:#3a0a0a;}
+  .main{margin-left:var(--nav-w);flex:1;display:flex;
+    flex-direction:column;}
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);
+    padding:0.875rem 1.75rem;display:flex;align-items:center;
+    justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-title{font-size:1.1rem;font-weight:600;}
+  .topbar-right{display:flex;align-items:center;gap:0.75rem;}
+  .content{padding:1.5rem;flex:1;}
+  .card{background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;margin-bottom:1.25rem;}
+  .card-header{padding:0.875rem 1.25rem;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;
+    justify-content:space-between;flex-wrap:wrap;gap:0.5rem;}
+  .card-title{font-size:0.9rem;font-weight:600;
+    display:flex;align-items:center;gap:0.5rem;}
+  .card-body{padding:1.25rem;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;
+    margin-bottom:1.25rem;}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;
+    margin-bottom:1.25rem;}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;padding:1.1rem;}
+  .stat-label{font-size:0.72rem;color:var(--text2);text-transform:uppercase;
+    letter-spacing:0.05em;margin-bottom:0.4rem;}
+  .stat-value{font-size:1.5rem;font-weight:700;}
+  .stat-sub{font-size:0.75rem;color:var(--text2);margin-top:0.2rem;}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;
+    margin-right:0.35rem;}
+  .dot-g{background:var(--success);box-shadow:0 0 6px var(--success);}
+  .dot-r{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+  .dot-y{background:var(--warning);box-shadow:0 0 6px var(--warning);}
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;
+    padding:0.45rem 0.9rem;border-radius:8px;font-size:0.82rem;
+    font-weight:500;cursor:pointer;border:none;
+    transition:opacity 0.2s,transform 0.1s;text-decoration:none;}
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-success{background:#16a34a;color:white;}
+  .btn-danger{background:var(--danger);color:white;}
+  .btn-warning{background:var(--warning);color:#000;}
+  .btn-ghost{background:var(--bg3);color:var(--text2);
+    border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);}
+  .badge{padding:0.2rem 0.5rem;border-radius:20px;
+    font-size:0.7rem;font-weight:600;}
+  .badge-g{background:#052a1a;color:var(--success);border:1px solid #1a5c3a;}
+  .badge-r{background:#2a0a0a;color:var(--danger);border:1px solid #5a1a1a;}
+  .badge-gray{background:var(--bg3);color:var(--text2);
+    border:1px solid var(--border);}
+  .badge-y{background:#2a1a00;color:var(--warning);border:1px solid #5a3a00;}
+  .form-group{display:flex;flex-direction:column;gap:0.4rem;
+    margin-bottom:0.875rem;}
+  .form-group label{font-size:0.75rem;color:var(--text2);
+    font-weight:600;text-transform:uppercase;letter-spacing:0.04em;}
+  .form-group input,.form-group select{background:var(--bg3);
+    border:1px solid var(--border);border-radius:8px;
+    padding:0.6rem 0.875rem;color:var(--text);font-size:0.875rem;
+    outline:none;transition:border-color 0.2s;}
+  .form-group input:focus,.form-group select:focus{
+    border-color:var(--accent);}
+  .prog-bar{height:8px;background:var(--bg3);border-radius:4px;
+    overflow:hidden;margin-top:0.4rem;}
+  .prog-fill{height:100%;border-radius:4px;transition:width 0.5s;}
+  .prog-green{background:var(--success);}
+  .prog-blue{background:var(--accent);}
+  /* tabela cache */
+  .table-wrap{overflow-x:auto;max-height:400px;overflow-y:auto;}
+  table{width:100%;border-collapse:collapse;font-size:0.8rem;}
+  th{background:var(--bg3);color:var(--text2);font-size:0.68rem;
+    font-weight:700;text-transform:uppercase;letter-spacing:0.05em;
+    padding:0.65rem 0.875rem;text-align:left;
+    position:sticky;top:0;}
+  td{padding:0.6rem 0.875rem;border-bottom:1px solid var(--border);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--bg3);}
+  /* top domínios */
+  .dom-bar{display:flex;align-items:center;gap:0.75rem;
+    padding:0.5rem 0;border-bottom:1px solid var(--border);}
+  .dom-bar:last-child{border-bottom:none;}
+  .dom-name{font-size:0.82rem;min-width:200px;
+    font-family:monospace;}
+  .dom-count{font-size:0.75rem;color:var(--text2);
+    min-width:60px;text-align:right;}
+  .dom-prog{flex:1;height:6px;background:var(--bg3);
+    border-radius:3px;overflow:hidden;}
+  .dom-prog-fill{height:100%;background:var(--accent);
+    border-radius:3px;}
+  /* control bar */
+  .ctrl-bar{display:flex;align-items:center;gap:0.75rem;
+    padding:0.875rem 1.25rem;background:var(--bg3);
+    border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .ctrl-status{font-size:0.875rem;font-weight:600;
+    display:flex;align-items:center;gap:0.4rem;}
+  /* spin */
+  .spin{width:16px;height:16px;border:2px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;
+    animation:spin 0.8s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  /* toast */
+  #tw{position:fixed;bottom:1.5rem;right:1.5rem;
+    display:flex;flex-direction:column;gap:0.5rem;z-index:9999;}
+  .toast{background:var(--bg2);border:1px solid var(--border);
+    border-radius:10px;padding:0.75rem 1rem;font-size:0.82rem;
+    min-width:260px;max-width:360px;display:flex;
+    align-items:center;gap:0.65rem;
+    box-shadow:0 8px 32px #00000066;animation:si 0.3s ease;}
+  @keyframes si{
+    from{transform:translateX(110%);opacity:0;}
+    to{transform:translateX(0);opacity:1;}}
+  .toast.success{border-color:#1a5c3a;}
+  .toast.error{border-color:#5a1a1a;}
+  .toast.warning{border-color:#5a3a00;}
+  @media(max-width:768px){
+    .sidebar{display:none;}.main{margin-left:0;}
+    .grid-3,.grid-2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">🛡️</div>
+    <div><div class="title">RRFS Servidores</div>
+    <div class="sub">v2.0</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a class="nav-item" href="/dashboard"><span class="ni">📊</span>Dashboard</a>
+    <div class="nav-section">Firewall & Rede</div>
+    <a class="nav-item" href="/firewall"><span class="ni">🔥</span>Firewall UFW</a>
+    <a class="nav-item" href="/tor"><span class="ni">🧅</span>Tor Hidden Services</a>
+    <a class="nav-item" href="/conexao"><span class="ni">🌐</span>Conexão Segura</a>
+    <div class="nav-section">Proteção</div>
+    <a class="nav-item active" href="/dns"><span class="ni">🔍</span>DNS Seguro</a>
+    <a class="nav-item" href="/antivirus"><span class="ni">🦠</span>Antivírus</a>
+    <a class="nav-item" href="/selinux"><span class="ni">🔒</span>AppArmor</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="/logout" class="btn-logout">🚪 Sair</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">🔍 DNS Seguro (Unbound)</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="carregarStatus()">
+        🔄 Atualizar
+      </button>
+    </div>
+  </div>
+
+  <!-- controle -->
+  <div class="ctrl-bar">
+    <div class="ctrl-status" id="dnsStatusCtrl">
+      <span class="spin"></span> Verificando...
+    </div>
+    <button class="btn btn-success" id="btnAtivar"
+      onclick="ativarDNS()" style="display:none">
+      ▶ Ativar DNS Seguro
+    </button>
+    <button class="btn btn-danger" id="btnDesativar"
+      onclick="desativarDNS()" style="display:none">
+      ⏹ Desativar
+    </button>
+    <button class="btn btn-ghost" id="btnLimparCache"
+      onclick="limparCache()" style="display:none">
+      🗑️ Limpar Cache
+    </button>
+    <span style="margin-left:auto;font-size:0.75rem;
+      color:var(--text2);">
+      🔒 Root Servers · DNSSEC · Cache inteligente
+    </span>
+  </div>
+
+  <div class="content">
+    <!-- stats -->
+    <div class="grid-3">
+      <div class="stat-card">
+        <div class="stat-label">Total de Consultas</div>
+        <div class="stat-value" id="st-total">--</div>
+        <div class="stat-sub">desde último restart</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Cache Hit %</div>
+        <div class="stat-value" id="st-cache">--%</div>
+        <div class="prog-bar">
+          <div class="prog-fill prog-blue"
+            id="st-cache-bar" style="width:0%"></div>
+        </div>
+        <div class="stat-sub" id="st-cache-sub">-- hits / -- miss</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tempo Médio de Resposta</div>
+        <div class="stat-value" id="st-tempo">-- ms</div>
+        <div class="stat-sub">resolução via root servers</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- configurações -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚙️ Configurações</div>
+        </div>
+        <div class="card-body">
+          <div class="form-group">
+            <label>Porta do DNS</label>
+            <input type="number" id="cfgPorta"
+              value="53" min="1" max="65535">
+          </div>
+
+          <div style="background:#2a1a00;border:1px solid #5a3a00;
+            border-radius:8px;padding:0.75rem;font-size:0.8rem;
+            color:var(--warning);margin-bottom:0.875rem;">
+            ⚠️ Alterar a porta DNS para um valor diferente de 53
+            quebra a resolução padrão do sistema.
+            Use apenas se tiver Pi-hole/AdGuard como filtro externo.
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" id="cfgFiltroExt"
+                style="accent-color:var(--accent);margin-right:0.4rem;">
+              Tenho filtro DNS externo (Pi-hole / AdGuard)
+            </label>
+          </div>
+
+          <div id="filtroExtInfo" style="display:none;
+            background:#0a1a2a;border:1px solid #1a3a5a;
+            border-radius:8px;padding:0.75rem;font-size:0.8rem;
+            color:var(--accent);margin-bottom:0.875rem;">
+            ℹ️ Configure seu filtro DNS externo para encaminhar
+            para <strong>127.0.0.1:[porta configurada]</strong>
+          </div>
+
+          <button class="btn btn-primary"
+            onclick="salvarPorta()">
+            💾 Salvar Configuração
+          </button>
+        </div>
+      </div>
+
+      <!-- status do sistema -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Status Detalhado</div>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:0.65rem;">
+            <div style="display:flex;justify-content:space-between;
+              align-items:center;padding:0.5rem;
+              background:var(--bg3);border-radius:6px;">
+              <span style="font-size:0.82rem">Unbound</span>
+              <span id="st-unbound-badge"
+                class="badge badge-gray">--</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;
+              align-items:center;padding:0.5rem;
+              background:var(--bg3);border-radius:6px;">
+              <span style="font-size:0.82rem">
+                systemd-resolved
+              </span>
+              <span id="st-resolved-badge"
+                class="badge badge-gray">--</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;
+              align-items:center;padding:0.5rem;
+              background:var(--bg3);border-radius:6px;">
+              <span style="font-size:0.82rem">Porta DNS</span>
+              <code id="st-porta" style="font-size:0.82rem;
+                color:var(--accent)">--</code>
+            </div>
+            <div style="display:flex;justify-content:space-between;
+              align-items:center;padding:0.5rem;
+              background:var(--bg3);border-radius:6px;">
+              <span style="font-size:0.82rem">
+                Filtro externo
+              </span>
+              <span id="st-filtro-ext" style="font-size:0.82rem">
+                --
+              </span>
+            </div>
+            <div style="display:flex;justify-content:space-between;
+              align-items:center;padding:0.5rem;
+              background:var(--bg3);border-radius:6px;">
+              <span style="font-size:0.82rem">
+                Consultas Unbound
+              </span>
+              <strong id="st-pct-unbound"
+                style="font-size:0.82rem;color:var(--warning)">
+                --%
+              </strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;
+              align-items:center;padding:0.5rem;
+              background:var(--bg3);border-radius:6px;">
+              <span style="font-size:0.82rem">
+                Consultas do Cache
+              </span>
+              <strong id="st-pct-cache2"
+                style="font-size:0.82rem;color:var(--success)">
+                --%
+              </strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- top domínios -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          📊 Domínios Mais Acessados
+        </div>
+        <button class="btn btn-ghost"
+          onclick="carregarEstatisticas()">
+          🔄 Atualizar
+        </button>
+      </div>
+      <div class="card-body" id="topDominios">
+        <div style="text-align:center;padding:2rem;
+          color:var(--text2)">
+          <span class="spin"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- cache DNS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🗄️ Cache DNS</div>
+        <div style="display:flex;gap:0.5rem;">
+          <button class="btn btn-ghost"
+            onclick="carregarCache()">
+            🔄 Atualizar
+          </button>
+          <button class="btn btn-warning"
+            onclick="limparCache()">
+            🗑️ Limpar Cache
+          </button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Domínio</th>
+              <th>TTL (s)</th>
+              <th>Tipo</th>
+              <th>Valor</th>
+            </tr>
+          </thead>
+          <tbody id="tblCache">
+            <tr><td colspan="4"
+              style="text-align:center;color:var(--text2);
+              padding:2rem">
+              Carregando...
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tw"></div>
+
+<script>
+function toast(msg,tipo='info'){
+  const ic={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el=document.createElement('div');
+  el.className=`toast ${tipo}`;
+  el.innerHTML=`<span>${ic[tipo]}</span><span>${msg}</span>`;
+  document.getElementById('tw').appendChild(el);
+  setTimeout(()=>el.remove(),5000);
+}
+
+document.getElementById('cfgFiltroExt')
+  .addEventListener('change',function(){
+    document.getElementById('filtroExtInfo')
+      .style.display=this.checked?'block':'none';
+  });
+
+async function carregarStatus(){
+  try{
+    const r=await fetch('/api/dns/status');
+    const d=await r.json();
+    if(!d.sucesso)return;
+
+    const ativo=d.ativo;
+    const inst=d.instalado;
+
+    document.getElementById('dnsStatusCtrl').innerHTML=
+      `<span class="dot ${ativo?'dot-g':'dot-r'}"></span>
+       <strong>${ativo?'DNS Seguro Ativo':'DNS Seguro Inativo'}</strong>
+       ${inst?'':`<span style="color:var(--text2);
+         font-size:0.78rem;margin-left:0.5rem">
+         (Unbound não instalado)</span>`}`;
+
+    document.getElementById('btnAtivar').style.display=
+      ativo?'none':'inline-flex';
+    document.getElementById('btnDesativar').style.display=
+      ativo?'inline-flex':'none';
+    document.getElementById('btnLimparCache').style.display=
+      ativo?'inline-flex':'none';
+
+    // stats
+    document.getElementById('st-total').textContent=
+      d.total_queries||0;
+    const pct=d.pct_cache||0;
+    document.getElementById('st-cache').textContent=pct+'%';
+    document.getElementById('st-cache-bar').style.width=pct+'%';
+    document.getElementById('st-cache-sub').textContent=
+      `${d.cache_hits||0} hits / ${d.cache_miss||0} miss`;
+    document.getElementById('st-tempo').textContent=
+      (d.tempo_medio_ms||0)+' ms';
+
+    // status detalhado
+    document.getElementById('st-unbound-badge').innerHTML=
+      `<span class="badge ${ativo?'badge-g':'badge-r'}">
+        ${ativo?'Rodando':'Parado'}
+      </span>`;
+    document.getElementById('st-resolved-badge').innerHTML=
+      `<span class="badge ${d.systemd_resolved?'badge-y':'badge-g'}">
+        ${d.systemd_resolved?'Ativo (desativar)':'Desativado ✓'}
+      </span>`;
+    document.getElementById('st-porta').textContent=
+      (d.porta||53)+'/UDP';
+    document.getElementById('st-filtro-ext').textContent=
+      d.tem_filtro_externo?'✅ Sim':'❌ Não';
+    document.getElementById('st-pct-unbound').textContent=
+      (d.pct_unbound||0)+'%';
+    document.getElementById('st-pct-cache2').textContent=
+      (d.pct_cache||0)+'%';
+
+    // config
+    document.getElementById('cfgPorta').value=d.porta||53;
+    document.getElementById('cfgFiltroExt').checked=
+      d.tem_filtro_externo||false;
+
+    // top domínios
+    renderizarTopDominios(d.dominios_top||[]);
+
+    if(ativo) await carregarCache();
+
+  }catch(e){
+    console.error('Erro dns status:',e);
+  }
+}
+
+function renderizarTopDominios(dominios){
+  const el=document.getElementById('topDominios');
+  if(!dominios.length){
+    el.innerHTML=
+      '<p style="color:var(--text2);font-size:0.85rem">'+
+      'Nenhum dado disponível. Ative o DNS seguro e '+
+      'aguarde consultas.</p>';
+    return;
+  }
+  const max=dominios[0]?.count||1;
+  el.innerHTML=dominios.map(d=>`
+    <div class="dom-bar">
+      <div class="dom-name">🔍 ${d.dominio}</div>
+      <div class="dom-prog">
+        <div class="dom-prog-fill"
+          style="width:${Math.round(d.count/max*100)}%"></div>
+      </div>
+      <div class="dom-count">${d.count}x</div>
+    </div>
+  `).join('');
+}
+
+async function carregarEstatisticas(){
+  try{
+    const r=await fetch('/api/dns/estatisticas');
+    const d=await r.json();
+    if(d.sucesso){
+      renderizarTopDominios(d.dominios_top||[]);
+    }
+  }catch(e){}
+}
+
+async function carregarCache(){
+  try{
+    const r=await fetch('/api/dns/cache');
+    const d=await r.json();
+    const tbody=document.getElementById('tblCache');
+    const cache=d.cache||[];
+
+    if(!cache.length){
+      tbody.innerHTML=`<tr><td colspan="4"
+        style="text-align:center;color:var(--text2);
+        padding:2rem">
+        Cache vazio ou DNS inativo
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML=cache.map(e=>`<tr>
+      <td><code style="font-size:0.78rem">${e.dominio}</code></td>
+      <td>
+        <span style="color:${e.ttl<300?'var(--warning)':'var(--success)'}">
+          ${e.ttl}s
+        </span>
+      </td>
+      <td><span class="badge badge-gray">${e.tipo}</span></td>
+      <td style="font-family:monospace;font-size:0.75rem">
+        ${e.valor}
+      </td>
+    </tr>`).join('');
+  }catch(e){
+    console.error('Erro cache:',e);
+  }
+}
+
+async function ativarDNS(){
+  const btn=document.getElementById('btnAtivar');
+  btn.disabled=true;
+  btn.textContent='⏳ Instalando/Ativando...';
+  toast('Instalando Unbound e baixando Root Servers...','info');
+  try{
+    const r=await fetch('/api/dns/ativar',{method:'POST'});
+    const d=await r.json();
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso) await carregarStatus();
+  }catch(e){
+    toast('Erro de comunicação','error');
+  }
+  btn.disabled=false;
+  btn.textContent='▶ Ativar DNS Seguro';
+}
+
+async function desativarDNS(){
+  if(!confirm('Desativar DNS Seguro? O sistema voltará a usar '+
+    'o DNS padrão.')) return;
+  try{
+    const r=await fetch('/api/dns/desativar',{method:'POST'});
+    const d=await r.json();
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso) await carregarStatus();
+  }catch(e){
+    toast('Erro de comunicação','error');
+  }
+}
+
+async function salvarPorta(){
+  const porta=document.getElementById('cfgPorta').value;
+  const filtro=document.getElementById('cfgFiltroExt').checked;
+  try{
+    const r=await fetch('/api/dns/configurar_porta',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({porta:parseInt(porta),
+        tem_filtro_externo:filtro})
+    });
+    const d=await r.json();
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.aviso) toast(d.aviso,'warning');
+    if(d.sucesso) await carregarStatus();
+  }catch(e){
+    toast('Erro de comunicação','error');
+  }
+}
+
+async function limparCache(){
+  try{
+    const r=await fetch('/api/dns/limpar_cache',{method:'POST'});
+    const d=await r.json();
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso) await carregarStatus();
+  }catch(e){
+    toast('Erro de comunicação','error');
+  }
+}
+
+carregarStatus();
+setInterval(carregarStatus,20000);
+</script>
+</body>
+</html>

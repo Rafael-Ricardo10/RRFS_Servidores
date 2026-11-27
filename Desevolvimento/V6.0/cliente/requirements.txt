@@ -1,0 +1,6 @@
+flask
+flask-sock
+paramiko
+pystray
+pillow
+simple-websocket

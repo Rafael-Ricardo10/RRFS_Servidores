@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>Painel do Servidor - Tox</title>
+<style>
+  :root{--bg:#121212;--card:#1e1e1e;--accent:#4fd1c5;--texto:#eee;--borda:#333;}
+  body{background:var(--bg);color:var(--texto);font-family:Segoe UI,Arial,sans-serif;margin:0;padding:20px;}
+  h1{color:var(--accent);} h2{color:#8fe3db;font-size:18px;}
+  .painel{background:var(--card);border:1px solid var(--borda);border-radius:10px;padding:20px;margin-bottom:20px;}
+  .linha{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px;}
+  input{background:#2a2a2a;color:var(--texto);border:1px solid #444;border-radius:6px;padding:8px;}
+  button{padding:8px 14px;background:var(--accent);border:none;border-radius:6px;color:#111;font-weight:bold;cursor:pointer;}
+  button.perigo{background:#ff6b6b;} button.secundario{background:#555;color:#eee;}
+  button:hover{opacity:.85;}
+  table{width:100%;border-collapse:collapse;margin-top:10px;}
+  th,td{text-align:left;padding:8px;border-bottom:1px solid var(--borda);font-size:14px;}
+  .switch{position:relative;display:inline-block;width:46px;height:24px;}
+  .switch input{display:none;}
+  .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#555;border-radius:24px;transition:.2s;}
+  .slider:before{position:absolute;content:"";height:18px;width:18px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.2s;}
+  input:checked + .slider{background:var(--accent);}
+  input:checked + .slider:before{transform:translateX(22px);}
+  .chave-texto{word-break:break-all;background:#2a2a2a;padding:10px;border-radius:6px;font-family:monospace;font-size:13px;}
+  .aviso{color:#f6c343;} .ok{color:#6bffb0;} .tag{font-size:12px;background:#333;padding:2px 8px;border-radius:10px;}
+  .status-bolha{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;}
+</style>
+</head>
+<body>
+<h1>🖥️ Painel do Servidor (Tox)</h1>
+
+<div class="painel">
+  <h2>Status da Rede Tox</h2>
+  <p>
+    {% if status_rede == 0 %}
+      <span class="status-bolha" style="background:#ff6b6b;"></span><span class="aviso">Offline - tentando conectar à rede Tox...</span>
+    {% elif status_rede == 1 %}
+      <span class="status-bolha" style="background:#f6c343;"></span><span>Conectado via retransmissor TCP</span>
+    {% else %}
+      <span class="status-bolha" style="background:#6bffb0;"></span><span class="ok">Conectado via UDP (direto)</span>
+    {% endif %}
+  </p>
+  {% if not paramiko_ok %}<p class="aviso">⚠ paramiko não instalado — SSH indisponível.</p>{% endif %}
+</div>
+
+<div class="painel">
+  <h2>Sua Chave de Acesso (ID Tox)</h2>
+  <div class="chave-texto" id="texto-chave">{{ endereco_tox }}</div>
+  <div class="linha" style="margin-top:10px;">
+    <button onclick="copiarChave()">📋 Copiar</button>
+    <button class="secundario" onclick="renovarChave()">🔄 Renovar (revoga cópias antigas)</button>
+    <button class="perigo" onclick="excluirChave()">🗑️ Gerar Nova Identidade (revoga tudo)</button>
+  </div>
+</div>
+
+<div class="painel">
+  <h2>Clientes Conectados</h2>
+  <table>
+    <thead><tr><th>Chave Pública</th><th>Status</th><th>Ação</th></tr></thead>
+    <tbody>
+    {% for a in amigos %}
+      <tr>
+        <td>{{ a.chave_publica[:24] }}...</td>
+        <td>{% if a.conectado %}<span class="ok">online</span>{% else %}<span class="aviso">offline</span>{% endif %}</td>
+        <td><button class="perigo" onclick="removerAmigo({{ a.numero }})">Revogar</button></td>
+      </tr>
+    {% else %}
+      <tr><td colspan="3">Nenhum cliente conectou ainda.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="painel">
+  <h2>Nós de Bootstrap (entrada na rede Tox)</h2>
+  <p style="font-size:13px;color:#999;">Mantenha atualizado enquanto houver internet — serve de cache para quando faltar.</p>
+  <button onclick="atualizarBootstrap()">🔄 Atualizar lista agora (online)</button>
+  <table>
+    <thead><tr><th>IP</th><th>Porta</th><th>Origem</th><th></th></tr></thead>
+    <tbody>
+    {% for n in nos_bootstrap %}
+      <tr>
+        <td>{{ n.ip }}</td><td>{{ n.porta }}</td><td>{{ n.origem }}</td>
+        <td><button class="perigo" onclick="removerBootstrap({{ loop.index0 }})">x</button></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <h3 style="font-size:15px;">Adicionar manualmente</h3>
+  <form class="linha" onsubmit="adicionarBootstrap(event)">
+    <input id="bs-ip" placeholder="IP" required>
+    <input id="bs-porta" type="number" placeholder="Porta" value="33445" required>
+    <input id="bs-chave" placeholder="Chave pública (hex)" style="width:320px;" required>
+    <button type="submit">➕ Adicionar</button>
+  </form>
+</div>
+
+<div class="painel">
+  <h2>Serviços</h2>
+  <table>
+    <thead><tr><th>Nome</th><th>Endereço</th><th>Comentário</th><th>Status</th><th>Ações</th></tr></thead>
+    <tbody>
+    {% for s in servicos %}
+      <tr>
+        <td>{{ s.nome }} {% if s.builtin %}<span class="tag">padrão</span>{% endif %}</td>
+        <td>{{ s.host }}:{{ s.porta }}</td>
+        <td>{{ s.comentario }}</td>
+        <td><label class="switch"><input type="checkbox" onchange="alternarServico('{{ s.id }}')" {% if s.ativo %}checked{% endif %}><span class="slider"></span></label></td>
+        <td>
+          {% if not s.builtin %}
+            <button class="secundario" onclick="editarServico('{{ s.id }}')">✏️</button>
+            <button class="perigo" onclick="removerServico('{{ s.id }}')">🗑️</button>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <h3 style="font-size:15px;">Adicionar Serviço</h3>
+  <form class="linha" onsubmit="adicionarServico(event)">
+    <input id="novo-nome" placeholder="Nome" required>
+    <input id="novo-host" placeholder="IP" required>
+    <input id="novo-porta" type="number" placeholder="Porta" required>
+    <input id="novo-comentario" placeholder="Comentário">
+    <button type="submit">➕ Adicionar</button>
+  </form>
+</div>
+
+<script>
+async function chamar(url, method='GET', corpo=null){
+  const opts = {method, headers:{'Content-Type':'application/json'}};
+  if(corpo) opts.body = JSON.stringify(corpo);
+  const resp = await fetch(url, opts);
+  return resp.json();
+}
+function copiarChave(){ navigator.clipboard.writeText(document.getElementById('texto-chave').innerText); alert('Chave copiada!'); }
+async function renovarChave(){ if(!confirm('Renovar? Copias antigas da chave deixarão de funcionar para NOVAS conexões.')) return; await chamar('/api/chave/renovar','POST'); location.reload(); }
+async function excluirChave(){ if(!confirm('Isso cria uma identidade totalmente nova e desconecta todos. Confirma?')) return; await chamar('/api/chave/excluir','POST'); location.reload(); }
+async function removerAmigo(n){ if(!confirm('Revogar acesso deste cliente?')) return; await chamar(`/api/amigos/${n}/remover`,'POST'); location.reload(); }
+async function atualizarBootstrap(){ const r = await chamar('/api/bootstrap/atualizar','POST'); alert(r.ok ? `+${r.novos} novos nós` : 'Falha (sem internet?)'); location.reload(); }
+async function removerBootstrap(i){ await chamar(`/api/bootstrap/remover/${i}`,'POST'); location.reload(); }
+async function adicionarBootstrap(ev){
+  ev.preventDefault();
+  await chamar('/api/bootstrap/adicionar','POST',{ip:document.getElementById('bs-ip').value, porta:document.getElementById('bs-porta').value, chave_publica:document.getElementById('bs-chave').value});
+  location.reload();
+}
+async function alternarServico(id){ await chamar(`/api/servicos/${id}/alternar`,'POST'); }
+async function adicionarServico(ev){
+  ev.preventDefault();
+  await chamar('/api/servicos','POST',{nome:document.getElementById('novo-nome').value, host:document.getElementById('novo-host').value, porta:document.getElementById('novo-porta').value, comentario:document.getElementById('novo-comentario').value});
+  location.reload();
+}
+async function removerServico(id){ if(!confirm('Remover?')) return; await chamar(`/api/servicos/${id}`,'DELETE'); location.reload(); }
+async function editarServico(id){
+  const nome = prompt('Novo nome:'); if(nome===null) return;
+  const comentario = prompt('Novo comentário:');
+  await chamar(`/api/servicos/${id}`,'PUT',{nome, comentario}); location.reload();
+}
+setInterval(()=>{ fetch('/api/status').then(r=>r.json()).then(d=>{}); }, 15000);
+</script>
+</body>
+</html>

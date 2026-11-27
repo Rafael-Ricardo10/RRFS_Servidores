@@ -1,0 +1,2004 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS - Conexão</title>
+<style>
+  :root {
+    --bg:      #0a0a0f;
+    --bg2:     #111118;
+    --bg3:     #1a1a24;
+    --bg4:     #22222f;
+    --border:  #2a2a3a;
+    --accent:  #4f8ef7;
+    --accent2: #7c3aed;
+    --text:    #e2e8f0;
+    --text2:   #94a3b8;
+    --danger:  #ef4444;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --info:    #06b6d4;
+    --nav-w:   240px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* ── sidebar ── */
+  .sidebar {
+    width: var(--nav-w);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top:0; left:0;
+    height: 100vh;
+    z-index: 100;
+  }
+  .sidebar-logo {
+    padding: 1.5rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .sidebar-logo .icon {
+    width:40px; height:40px;
+    background: linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.2rem; flex-shrink:0;
+  }
+  .sidebar-logo .title { font-size:.9rem; font-weight:700; }
+  .sidebar-logo .sub   { font-size:.7rem; color:var(--text2); }
+  nav { flex:1; padding:1rem 0; overflow-y:auto; }
+  .nav-section {
+    font-size:.68rem; font-weight:700; color:var(--text2);
+    letter-spacing:.08em; text-transform:uppercase;
+    padding:.75rem 1.25rem .4rem;
+  }
+  .nav-item {
+    display:flex; align-items:center; gap:.75rem;
+    padding:.65rem 1.25rem;
+    color:var(--text2); text-decoration:none;
+    font-size:.9rem; border-left:3px solid transparent;
+    transition:background .15s,color .15s;
+  }
+  .nav-item:hover { background:var(--bg3); color:var(--text); }
+  .nav-item.active {
+    background:var(--bg3); color:var(--accent);
+    border-left-color:var(--accent);
+  }
+  .nav-icon { font-size:1.05rem; width:20px; text-align:center; }
+  .sidebar-bottom {
+    padding:1rem 1.25rem;
+    border-top:1px solid var(--border);
+  }
+  .btn-logout {
+    width:100%; background:#2a0a0a;
+    border:1px solid #5a1a1a; border-radius:8px;
+    padding:.6rem; color:#f87171; font-size:.85rem;
+    cursor:pointer; display:flex;
+    align-items:center; justify-content:center;
+    gap:.5rem; text-decoration:none;
+    transition:background .2s;
+  }
+  .btn-logout:hover { background:#3a0a0a; }
+
+  /* ── main ── */
+  .main {
+    margin-left:var(--nav-w); flex:1;
+    display:flex; flex-direction:column; min-height:100vh;
+  }
+  .topbar {
+    background:var(--bg2); border-bottom:1px solid var(--border);
+    padding:1rem 1.75rem;
+    display:flex; align-items:center; justify-content:space-between;
+    position:sticky; top:0; z-index:50;
+  }
+  .topbar-title { font-size:1.15rem; font-weight:600; }
+  .topbar-right { display:flex; align-items:center; gap:1rem; }
+  .badge-ssl {
+    background:#052a1a; border:1px solid #1a5c3a;
+    border-radius:6px; padding:.3rem .6rem;
+    font-size:.75rem; color:var(--success);
+  }
+  .timestamp { color:var(--text2); font-size:.8rem; }
+
+  /* ── content ── */
+  .content { padding:1.75rem; flex:1; }
+
+  /* ── tabs ── */
+  .tabs {
+    display:flex; gap:.5rem; margin-bottom:1.5rem;
+    border-bottom:1px solid var(--border);
+    padding-bottom:0;
+  }
+  .tab-btn {
+    padding:.65rem 1.25rem; background:none;
+    border:none; border-bottom:2px solid transparent;
+    color:var(--text2); font-size:.88rem;
+    font-weight:500; cursor:pointer;
+    transition:color .15s,border-color .15s;
+    margin-bottom:-1px;
+  }
+  .tab-btn:hover { color:var(--text); }
+  .tab-btn.active {
+    color:var(--accent); border-bottom-color:var(--accent);
+  }
+  .tab-pane { display:none; }
+  .tab-pane.active { display:block; }
+
+  /* ── cards ── */
+  .card {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:12px; overflow:hidden; margin-bottom:1.25rem;
+  }
+  .card-header {
+    padding:1rem 1.25rem; border-bottom:1px solid var(--border);
+    display:flex; align-items:center; justify-content:space-between;
+  }
+  .card-title {
+    font-size:.95rem; font-weight:600;
+    display:flex; align-items:center; gap:.5rem;
+  }
+  .card-body { padding:1.25rem; }
+
+  /* ── grid ── */
+  .grid-2 {
+    display:grid; grid-template-columns:repeat(2,1fr);
+    gap:1rem; margin-bottom:1.25rem;
+  }
+  .grid-3 {
+    display:grid; grid-template-columns:repeat(3,1fr);
+    gap:1rem; margin-bottom:1.25rem;
+  }
+
+  /* ── form ── */
+  .form-group { margin-bottom:1rem; }
+  .form-group label {
+    display:block; font-size:.8rem; font-weight:500;
+    color:var(--text2); margin-bottom:.4rem;
+    text-transform:uppercase; letter-spacing:.04em;
+  }
+  .form-control {
+    width:100%; background:var(--bg3);
+    border:1px solid var(--border); border-radius:8px;
+    padding:.6rem .875rem; color:var(--text);
+    font-size:.88rem; outline:none;
+    transition:border-color .2s;
+  }
+  .form-control:focus { border-color:var(--accent); }
+  select.form-control { cursor:pointer; }
+
+  .form-row { display:flex; gap:.75rem; }
+  .form-row .form-group { flex:1; }
+
+  /* ── btn ── */
+  .btn {
+    display:inline-flex; align-items:center; gap:.4rem;
+    padding:.55rem 1.1rem; border-radius:8px;
+    font-size:.85rem; font-weight:500; cursor:pointer;
+    border:none; transition:opacity .2s,transform .1s;
+    text-decoration:none;
+  }
+  .btn:active { transform:scale(.97); }
+  .btn:disabled { opacity:.45; cursor:not-allowed; }
+  .btn-primary  { background:var(--accent); color:#fff; }
+  .btn-success  { background:#16a34a; color:#fff; }
+  .btn-danger   { background:var(--danger); color:#fff; }
+  .btn-warning  { background:var(--warning); color:#000; }
+  .btn-info     { background:var(--info); color:#000; }
+  .btn-ghost {
+    background:var(--bg3); color:var(--text2);
+    border:1px solid var(--border);
+  }
+  .btn-ghost:hover { color:var(--text); }
+  .btn-sm { padding:.35rem .75rem; font-size:.78rem; }
+
+  /* ── badges ── */
+  .badge {
+    padding:.22rem .55rem; border-radius:20px;
+    font-size:.7rem; font-weight:600;
+  }
+  .badge-green  { background:#052a1a; color:var(--success); border:1px solid #1a5c3a; }
+  .badge-red    { background:#2a0a0a; color:var(--danger);  border:1px solid #5a1a1a; }
+  .badge-yellow { background:#2a1a00; color:var(--warning); border:1px solid #5a3a00; }
+  .badge-blue   { background:#0a1a2a; color:var(--accent);  border:1px solid #1a3a5a; }
+  .badge-gray   { background:var(--bg3); color:var(--text2); border:1px solid var(--border); }
+  .badge-purple { background:#1a0a2a; color:#a78bfa; border:1px solid #4c1d95; }
+
+  /* ── status dot ── */
+  .dot {
+    display:inline-block; width:8px; height:8px;
+    border-radius:50%; margin-right:.4rem;
+  }
+  .dot-green  { background:var(--success); box-shadow:0 0 6px var(--success); }
+  .dot-red    { background:var(--danger);  box-shadow:0 0 6px var(--danger); }
+  .dot-yellow { background:var(--warning); box-shadow:0 0 6px var(--warning); }
+  .dot-blue   { background:var(--accent);  box-shadow:0 0 6px var(--accent); }
+
+  /* ── info-item ── */
+  .info-grid {
+    display:grid; grid-template-columns:repeat(2,1fr);
+    gap:.75rem;
+  }
+  .info-item {
+    background:var(--bg3); border-radius:8px; padding:.75rem;
+  }
+  .info-item .lbl {
+    font-size:.7rem; color:var(--text2);
+    text-transform:uppercase; letter-spacing:.05em;
+    margin-bottom:.25rem;
+  }
+  .info-item .val {
+    font-size:.9rem; font-weight:600; word-break:break-all;
+  }
+
+  /* ── table ── */
+  .table-wrap { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; font-size:.85rem; }
+  th {
+    background:var(--bg3); color:var(--text2);
+    font-size:.72rem; font-weight:600;
+    text-transform:uppercase; letter-spacing:.05em;
+    padding:.7rem 1rem; text-align:left;
+  }
+  td { padding:.7rem 1rem; border-bottom:1px solid var(--border); }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--bg3); }
+
+  /* ── wifi lista ── */
+  .wifi-item {
+    display:flex; align-items:center;
+    justify-content:space-between;
+    padding:.65rem .875rem;
+    background:var(--bg3); border-radius:8px;
+    margin-bottom:.5rem; cursor:pointer;
+    border:1px solid transparent;
+    transition:border-color .15s;
+  }
+  .wifi-item:hover { border-color:var(--accent); }
+  .wifi-item.selecionada { border-color:var(--accent); background:var(--bg4); }
+  .wifi-signal { font-size:.75rem; color:var(--text2); }
+
+  /* ── sinal barras ── */
+  .sinal-bars {
+    display:inline-flex; align-items:flex-end;
+    gap:2px; height:14px;
+  }
+  .sinal-bars span {
+    width:3px; background:var(--border);
+    border-radius:1px;
+  }
+  .sinal-bars span.on { background:var(--success); }
+
+  /* ── loading ── */
+  .spin {
+    width:20px; height:20px;
+    border:2px solid var(--border);
+    border-top-color:var(--accent);
+    border-radius:50%;
+    animation:spin .8s linear infinite;
+    display:inline-block;
+  }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .loading-row {
+    display:flex; align-items:center;
+    justify-content:center; gap:.75rem;
+    padding:2rem; color:var(--text2); font-size:.9rem;
+  }
+
+  /* ── alerta segurança ── */
+  .alerta-box {
+    background:#2a0a0a; border:1px solid #5a1a1a;
+    border-radius:10px; padding:1rem 1.25rem;
+    margin-bottom:1.25rem;
+    display:flex; align-items:center;
+    justify-content:space-between; gap:1rem;
+  }
+  .alerta-box.hidden { display:none; }
+  .alerta-txt { font-size:.85rem; color:#f87171; }
+
+  /* ── modal ── */
+  .modal-overlay {
+    position:fixed; inset:0;
+    background:#00000088; backdrop-filter:blur(4px);
+    display:flex; align-items:center; justify-content:center;
+    z-index:1000; opacity:0; pointer-events:none;
+    transition:opacity .2s;
+  }
+  .modal-overlay.open { opacity:1; pointer-events:all; }
+  .modal {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:14px; padding:1.5rem;
+    width:100%; max-width:520px;
+    max-height:90vh; overflow-y:auto;
+    transform:translateY(20px);
+    transition:transform .2s;
+  }
+  .modal-overlay.open .modal { transform:translateY(0); }
+  .modal-header {
+    display:flex; align-items:center;
+    justify-content:space-between;
+    margin-bottom:1.25rem;
+  }
+  .modal-title { font-size:1rem; font-weight:600; }
+  .modal-close {
+    background:none; border:none; color:var(--text2);
+    font-size:1.2rem; cursor:pointer;
+    padding:.25rem; border-radius:4px;
+  }
+  .modal-close:hover { color:var(--text); }
+  .modal-footer {
+    display:flex; justify-content:flex-end;
+    gap:.75rem; margin-top:1.25rem;
+    padding-top:1rem; border-top:1px solid var(--border);
+  }
+
+  /* ── separador ── */
+  .sep {
+    border:none; border-top:1px solid var(--border);
+    margin:1rem 0;
+  }
+
+  /* ── mac helper ── */
+  .mac-row {
+    display:flex; gap:.5rem; align-items:flex-end;
+  }
+  .mac-row .form-group { flex:1; margin-bottom:0; }
+
+  /* ── vpn item ── */
+  .vpn-item {
+    background:var(--bg3); border-radius:10px;
+    padding:1rem; margin-bottom:.75rem;
+    border:1px solid var(--border);
+    transition:border-color .2s;
+  }
+  .vpn-item.ativa { border-color:var(--success); }
+  .vpn-header {
+    display:flex; align-items:center;
+    justify-content:space-between; margin-bottom:.75rem;
+  }
+  .vpn-nome { font-weight:600; font-size:.9rem; }
+  .vpn-actions { display:flex; gap:.5rem; }
+  .vpn-meta {
+    display:flex; gap:1rem; font-size:.78rem;
+    color:var(--text2); flex-wrap:wrap;
+  }
+
+  /* ── rede salva ── */
+  .rede-item {
+    background:var(--bg3); border-radius:10px;
+    padding:.875rem 1rem; margin-bottom:.6rem;
+    border:1px solid var(--border);
+    display:flex; align-items:center;
+    justify-content:space-between; gap:.75rem;
+  }
+  .rede-info { flex:1; min-width:0; }
+  .rede-nome {
+    font-weight:600; font-size:.88rem;
+    white-space:nowrap; overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .rede-meta { font-size:.75rem; color:var(--text2); margin-top:.2rem; }
+  .rede-actions { display:flex; gap:.4rem; flex-shrink:0; }
+
+  /* ── toast ── */
+  #toast-wrap {
+    position:fixed; bottom:1.5rem; right:1.5rem;
+    display:flex; flex-direction:column; gap:.5rem;
+    z-index:9999;
+  }
+  .toast {
+    background:var(--bg2); border:1px solid var(--border);
+    border-radius:10px; padding:.875rem 1.25rem;
+    font-size:.85rem; min-width:280px; max-width:380px;
+    display:flex; align-items:center; gap:.75rem;
+    box-shadow:0 8px 32px #00000066;
+    animation:slideIn .3s ease;
+  }
+  @keyframes slideIn {
+    from { transform:translateX(120%); opacity:0; }
+    to   { transform:translateX(0); opacity:1; }
+  }
+  .toast.success { border-color:#1a5c3a; }
+  .toast.error   { border-color:#5a1a1a; }
+  .toast.info    { border-color:#1a3a5a; }
+  .toast.warning { border-color:#5a3a00; }
+
+  /* ── segurança banner ── */
+  .sec-banner {
+    background:linear-gradient(135deg,#052a1a,#0a1a2a);
+    border:1px solid #1a5c3a; border-radius:10px;
+    padding:.875rem 1.25rem; margin-bottom:1.25rem;
+    display:flex; align-items:center; gap:.875rem;
+    font-size:.82rem;
+  }
+  .sec-banner .ico { font-size:1.3rem; }
+  .sec-banner strong { color:var(--success); }
+
+  @media (max-width:900px) {
+    .grid-2,.grid-3 { grid-template-columns:1fr; }
+  }
+  @media (max-width:768px) {
+    .sidebar { display:none; }
+    .main { margin-left:0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">🛡️</div>
+    <div>
+      <div class="title">RRFS</div>
+      <div class="sub">Segurança de Rede</div>
+    </div>
+  </div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a class="nav-item" href="/dashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </a>
+    <div class="nav-section">Segurança</div>
+    <a class="nav-item" href="/firewall">
+      <span class="nav-icon">🔥</span> Firewall UFW
+    </a>
+    <a class="nav-item" href="/tor">
+      <span class="nav-icon">🧅</span> Tor Hidden Services
+    </a>
+    <div class="nav-section">Rede</div>
+    <a class="nav-item active" href="/conexao">
+      <span class="nav-icon">🌐</span> Conexão
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="/logout" class="btn-logout">🚪 Sair</a>
+  </div>
+</aside>
+
+<!-- ── main ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">🌐 Conexão de Rede</div>
+    <div class="topbar-right">
+      <span class="badge-ssl">🔒 HTTPS</span>
+      <span class="timestamp" id="clock">--:--:--</span>
+      <button class="btn btn-ghost" onclick="carregarTudo()">🔄 Atualizar</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- banner segurança -->
+    <div class="sec-banner">
+      <span class="ico">🔐</span>
+      <div>
+        <strong>Proteção Ativa</strong> —
+        Apenas root pode alterar conexões.
+        Usuários comuns têm acesso de rede
+        <strong>bloqueado</strong> via PolicyKit + sudoers +
+        Watchdog. Tentativas são registradas.
+      </div>
+      <div id="alerta-count" style="margin-left:auto;flex-shrink:0"></div>
+    </div>
+
+    <!-- alerta segurança (tentativas detectadas) -->
+    <div class="alerta-box hidden" id="alertaBox">
+      <span class="alerta-txt" id="alertaTxt"></span>
+      <button class="btn btn-danger btn-sm"
+              onclick="verAlertas()">Ver Alertas</button>
+      <button class="btn btn-ghost btn-sm"
+              onclick="limparAlertas()">Limpar</button>
+    </div>
+
+    <!-- ── status rápido ── -->
+    <div class="grid-3">
+      <div class="card" style="margin-bottom:0">
+        <div class="card-body">
+          <div class="info-item" style="background:none;padding:0">
+            <div class="lbl">Conexão WAN</div>
+            <div class="val" style="margin-top:.4rem" id="st-wan">
+              <span class="spin"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-body">
+          <div class="info-item" style="background:none;padding:0">
+            <div class="lbl">VPN de Saída</div>
+            <div class="val" style="margin-top:.4rem" id="st-vpn">
+              <span class="spin"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:0">
+        <div class="card-body">
+          <div class="info-item" style="background:none;padding:0">
+            <div class="lbl">IP Público Atual</div>
+            <div class="val" style="margin-top:.4rem;font-family:monospace;color:var(--accent)" id="st-ip">
+              <span class="spin"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── tabs ── -->
+    <div class="tabs" style="margin-top:1.25rem">
+      <button class="tab-btn active" onclick="aba('wan')">🔌 WAN / Ethernet</button>
+      <button class="tab-btn" onclick="aba('wifi')">📶 Wi-Fi</button>
+      <button class="tab-btn" onclick="aba('redes')">💾 Redes Salvas</button>
+      <button class="tab-btn" onclick="aba('vpn')">🔒 VPN Saída</button>
+      <button class="tab-btn" onclick="aba('acesso')">🌍 VPN Acesso</button>
+      <button class="tab-btn" onclick="aba('modo')">⚙️ Modo</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ABA WAN -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-pane active" id="pane-wan">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔌 Configurar WAN / Ethernet</div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Interface</label>
+              <select class="form-control" id="wan-iface">
+                <option value="">Carregando...</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Modo IP</label>
+              <select class="form-control" id="wan-modo"
+                      onchange="toggleWanFixo()">
+                <option value="dhcp">DHCP (automático)</option>
+                <option value="fixo">IP Fixo</option>
+              </select>
+            </div>
+
+            <div id="wan-fixo-fields" style="display:none">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>IP</label>
+                  <input class="form-control" id="wan-ip"
+                         placeholder="192.168.1.100">
+                </div>
+                <div class="form-group">
+                  <label>Máscara (CIDR)</label>
+                  <input class="form-control" id="wan-mask"
+                         placeholder="24" value="24">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Gateway</label>
+                  <input class="form-control" id="wan-gw"
+                         placeholder="192.168.1.1">
+                </div>
+                <div class="form-group">
+                  <label>DNS</label>
+                  <input class="form-control" id="wan-dns"
+                         placeholder="8.8.8.8">
+                </div>
+              </div>
+            </div>
+
+            <hr class="sep">
+            <div style="font-size:.8rem;color:var(--text2);margin-bottom:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em">
+              🕵️ Privacidade (opcional)
+            </div>
+
+            <div class="form-group">
+              <label>MAC Address</label>
+              <div class="mac-row">
+                <div class="form-group">
+                  <input class="form-control" id="wan-mac"
+                         placeholder="aa:bb:cc:dd:ee:ff">
+                </div>
+                <button class="btn btn-ghost btn-sm"
+                        style="margin-bottom:0;flex-shrink:0"
+                        onclick="gerarMacWan()">🎲 Aleatório</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Hostname DHCP
+                <span style="color:var(--text2);font-weight:400;font-size:.7rem">
+                  (o que o roteador vê)
+                </span>
+              </label>
+              <input class="form-control" id="wan-hostname"
+                     placeholder="meu-servidor">
+            </div>
+
+            <button class="btn btn-primary" style="width:100%"
+                    onclick="configurarWan()">
+              ⚡ Aplicar Configuração
+            </button>
+          </div>
+        </div>
+
+        <!-- status WAN atual -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 Status Atual</div>
+          </div>
+          <div class="card-body">
+            <div class="info-grid" id="wan-status-grid">
+              <div class="loading-row" style="grid-column:span 2">
+                <span class="spin"></span> Carregando...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ABA WIFI -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-pane" id="pane-wifi">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📶 Redes Wi-Fi</div>
+            <button class="btn btn-ghost btn-sm"
+                    onclick="escanearWifi()">🔍 Escanear</button>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Interface Wi-Fi</label>
+              <select class="form-control" id="wifi-iface"
+                      onchange="escanearWifi()">
+                <option value="">Selecione...</option>
+              </select>
+            </div>
+            <div id="wifi-lista">
+              <div class="loading-row">
+                <span class="spin"></span>
+                Selecione uma interface e escaneie
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚙️ Configurar Conexão Wi-Fi</div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>SSID</label>
+              <input class="form-control" id="wifi-ssid"
+                     placeholder="Nome da rede">
+            </div>
+            <div class="form-group">
+              <label>Senha</label>
+              <input class="form-control" id="wifi-senha"
+                     type="password" placeholder="Deixe vazio se aberta">
+            </div>
+            <div class="form-group">
+              <label>Modo IP</label>
+              <select class="form-control" id="wifi-modo"
+                      onchange="toggleWifiFixo()">
+                <option value="dhcp">DHCP (automático)</option>
+                <option value="fixo">IP Fixo</option>
+              </select>
+            </div>
+
+            <div id="wifi-fixo-fields" style="display:none">
+              <div class="form-row">
+                <div class="form-group">
+                  <label>IP</label>
+                  <input class="form-control" id="wifi-ip"
+                         placeholder="192.168.1.100">
+                </div>
+                <div class="form-group">
+                  <label>Máscara CIDR</label>
+                  <input class="form-control" id="wifi-mask"
+                         placeholder="24" value="24">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Gateway</label>
+                  <input class="form-control" id="wifi-gw"
+                         placeholder="192.168.1.1">
+                </div>
+                <div class="form-group">
+                  <label>DNS</label>
+                  <input class="form-control" id="wifi-dns"
+                         placeholder="8.8.8.8">
+                </div>
+              </div>
+            </div>
+
+            <hr class="sep">
+            <div style="font-size:.8rem;color:var(--text2);margin-bottom:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em">
+              🕵️ Privacidade
+            </div>
+            <div class="form-group">
+              <label>MAC Address</label>
+              <div class="mac-row">
+                <div class="form-group">
+                  <input class="form-control" id="wifi-mac"
+                         placeholder="aa:bb:cc:dd:ee:ff">
+                </div>
+                <button class="btn btn-ghost btn-sm"
+                        style="margin-bottom:0;flex-shrink:0"
+                        onclick="gerarMacWifi()">🎲 Aleatório</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Hostname DHCP</label>
+              <input class="form-control" id="wifi-hostname"
+                     placeholder="meu-servidor">
+            </div>
+
+            <button class="btn btn-primary" style="width:100%"
+                    onclick="conectarWifi()" id="btn-wifi-conectar">
+              📶 Conectar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ABA REDES SALVAS -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-pane" id="pane-redes">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">💾 Redes Salvas</div>
+          <button class="btn btn-ghost btn-sm"
+                  onclick="carregarRedesSalvas()">🔄 Atualizar</button>
+        </div>
+        <div class="card-body" id="redes-lista">
+          <div class="loading-row">
+            <span class="spin"></span> Carregando...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ABA VPN SAÍDA -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-pane" id="pane-vpn">
+      <div class="grid-2">
+        <!-- importar -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📤 Importar VPN (.ovpn)</div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Nome da VPN</label>
+              <input class="form-control" id="vpn-nome"
+                     placeholder="Ex: Mullvad BR">
+            </div>
+            <div class="form-group">
+              <label>Arquivo .ovpn</label>
+              <input class="form-control" id="vpn-arquivo"
+                     type="file" accept=".ovpn,.conf">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Usuário (opcional)</label>
+                <input class="form-control" id="vpn-user"
+                       placeholder="username">
+              </div>
+              <div class="form-group">
+                <label>Senha (opcional)</label>
+                <input class="form-control" id="vpn-pass"
+                       type="password" placeholder="password">
+              </div>
+            </div>
+            <button class="btn btn-primary" style="width:100%"
+                    onclick="importarVPN()">
+              📤 Importar VPN
+            </button>
+          </div>
+        </div>
+
+        <!-- modo automático -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚡ Seleção Automática</div>
+          </div>
+          <div class="card-body">
+            <p style="font-size:.85rem;color:var(--text2);margin-bottom:1rem;line-height:1.6">
+              O modo automático testa a latência de todas as VPNs
+              importadas e conecta automaticamente à mais rápida.
+            </p>
+            <button class="btn btn-success" style="width:100%"
+                    onclick="ativarModoVPNAuto()">
+              🚀 Conectar à Melhor VPN
+            </button>
+            <hr class="sep">
+            <button class="btn btn-danger" style="width:100%"
+                    onclick="desconectarVPN()">
+              ⏹ Desconectar VPN
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- lista vpns -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔒 VPNs Importadas</div>
+          <button class="btn btn-ghost btn-sm"
+                  onclick="carregarVPNs()">🔄 Atualizar</button>
+        </div>
+        <div class="card-body" id="vpn-lista">
+          <div class="loading-row">
+            <span class="spin"></span> Carregando...
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ABA VPN ACESSO -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-pane" id="pane-acesso">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🌍 Servidor VPN de Acesso Remoto</div>
+          </div>
+          <div class="card-body">
+            <div class="form-group">
+              <label>Modo de Acesso</label>
+              <select class="form-control" id="acc-modo">
+                <option value="ip_publico">IP Público Direto</option>
+                <option value="tor">Via Tor (.onion)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Portas Liberadas para Acesso</label>
+              <input class="form-control" id="acc-portas"
+                     placeholder="2000,22,80,443"
+                     value="2000">
+              <div style="font-size:.72rem;color:var(--text2);margin-top:.3rem">
+                Porta 2000 (painel) sempre incluída automaticamente
+              </div>
+            </div>
+            <button class="btn btn-ghost" style="width:100%;margin-bottom:.75rem"
+                    onclick="configurarVPNAcesso()">
+              💾 Salvar Configuração
+            </button>
+            <div class="form-row">
+              <button class="btn btn-success" style="flex:1"
+                      onclick="ativarVPNAcesso()">
+                ▶ Ativar Servidor
+              </button>
+              <button class="btn btn-danger" style="flex:1"
+                      onclick="desativarVPNAcesso()">
+                ⏹ Desativar
+              </button>
+            </div>
+            <hr class="sep">
+            <button class="btn btn-info" style="width:100%"
+                    onclick="baixarOVPN()">
+              ⬇ Baixar Arquivo .ovpn do Cliente
+            </button>
+          </div>
+        </div>
+
+        <!-- status acesso -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📊 Status do Servidor</div>
+          </div>
+          <div class="card-body">
+            <div class="info-grid" id="acc-status-grid">
+              <div class="loading-row" style="grid-column:span 2">
+                <span class="spin"></span> Carregando...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════ -->
+    <!-- ABA MODO -->
+    <!-- ═══════════════════════════════════════════════ -->
+    <div class="tab-pane" id="pane-modo">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚙️ Modo de Saída de Tráfego</div>
+        </div>
+        <div class="card-body">
+          <div class="grid-3" style="margin-bottom:0">
+            <div class="vpn-item" id="modo-card-direto"
+                 style="cursor:pointer" onclick="selecionarModo('direto')">
+              <div style="font-size:2rem;margin-bottom:.5rem">🌐</div>
+              <div style="font-weight:600;margin-bottom:.3rem">Direto</div>
+              <div style="font-size:.8rem;color:var(--text2)">
+                Tráfego sai diretamente pela WAN sem anonimização.
+                Máxima velocidade.
+              </div>
+            </div>
+            <div class="vpn-item" id="modo-card-vpn"
+                 style="cursor:pointer" onclick="selecionarModo('vpn')">
+              <div style="font-size:2rem;margin-bottom:.5rem">🔒</div>
+              <div style="font-weight:600;margin-bottom:.3rem">VPN</div>
+              <div style="font-size:.8rem;color:var(--text2)">
+                Selecione uma VPN específica da lista para rotear
+                todo o tráfego.
+              </div>
+              <div class="form-group" style="margin-top:.75rem"
+                   onclick="event.stopPropagation()">
+                <select class="form-control" id="modo-vpn-select">
+                  <option value="">Carregando VPNs...</option>
+                </select>
+              </div>
+            </div>
+            <div class="vpn-item" id="modo-card-vpn_auto"
+                 style="cursor:pointer" onclick="selecionarModo('vpn_auto')">
+              <div style="font-size:2rem;margin-bottom:.5rem">🚀</div>
+              <div style="font-weight:600;margin-bottom:.3rem">VPN Automática</div>
+              <div style="font-size:.8rem;color:var(--text2)">
+                Testa a latência de todas as VPNs e conecta à
+                mais rápida automaticamente.
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:.85rem;color:var(--text2)">
+              Modo atual: <strong id="modo-atual-label" style="color:var(--text)">--</strong>
+            </div>
+            <button class="btn btn-primary" id="btn-aplicar-modo"
+                    onclick="aplicarModo()">
+              ⚡ Aplicar Modo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ── toast ── -->
+<div id="toast-wrap"></div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- MODAL EDITAR REDE -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-editar-rede">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">✏️ Editar Rede Salva</span>
+      <button class="modal-close"
+              onclick="fecharModal('modal-editar-rede')">✕</button>
+    </div>
+    <input type="hidden" id="edit-rede-id">
+    <input type="hidden" id="edit-rede-tipo">
+
+    <div class="form-group">
+      <label>Modo IP</label>
+      <select class="form-control" id="edit-rede-modo"
+              onchange="toggleEditFixo()">
+        <option value="dhcp">DHCP</option>
+        <option value="fixo">IP Fixo</option>
+      </select>
+    </div>
+
+    <div id="edit-fixo-fields">
+      <div class="form-row">
+        <div class="form-group">
+          <label>IP</label>
+          <input class="form-control" id="edit-rede-ip"
+                 placeholder="192.168.1.100">
+        </div>
+        <div class="form-group">
+          <label>Máscara CIDR</label>
+          <input class="form-control" id="edit-rede-mask"
+                 placeholder="24">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Gateway</label>
+          <input class="form-control" id="edit-rede-gw"
+                 placeholder="192.168.1.1">
+        </div>
+        <div class="form-group">
+          <label>DNS</label>
+          <input class="form-control" id="edit-rede-dns"
+                 placeholder="8.8.8.8">
+        </div>
+      </div>
+    </div>
+
+    <!-- campo senha só aparece em wifi -->
+    <div id="edit-wifi-fields">
+      <div class="form-group">
+        <label>Senha Wi-Fi</label>
+        <input class="form-control" id="edit-rede-senha"
+               type="password" placeholder="Nova senha (vazio = manter)">
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div style="font-size:.8rem;color:var(--text2);margin-bottom:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.05em">
+      🕵️ Privacidade
+    </div>
+    <div class="form-group">
+      <label>MAC Address</label>
+      <div class="mac-row">
+        <div class="form-group">
+          <input class="form-control" id="edit-rede-mac"
+                 placeholder="aa:bb:cc:dd:ee:ff">
+        </div>
+        <button class="btn btn-ghost btn-sm"
+                style="margin-bottom:0;flex-shrink:0"
+                onclick="gerarMacEdit()">🎲</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Hostname DHCP</label>
+      <input class="form-control" id="edit-rede-hostname"
+             placeholder="meu-servidor">
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost"
+              onclick="fecharModal('modal-editar-rede')">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEdicaoRede()">
+        💾 Salvar Alterações
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- MODAL ALERTAS SEGURANÇA -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-alertas">
+  <div class="modal" style="max-width:680px">
+    <div class="modal-header">
+      <span class="modal-title">🚨 Alertas de Segurança</span>
+      <button class="modal-close"
+              onclick="fecharModal('modal-alertas')">✕</button>
+    </div>
+    <div id="alertas-lista"
+         style="font-family:monospace;font-size:.78rem;
+                background:var(--bg3);border-radius:8px;
+                padding:1rem;max-height:400px;overflow-y:auto">
+      Carregando...
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"
+              onclick="fecharModal('modal-alertas')">Fechar</button>
+      <button class="btn btn-danger"
+              onclick="limparAlertas()">🗑 Limpar Tudo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════ -->
+<!-- MODAL PORTAS VPN -->
+<!-- ══════════════════════════════════════════════════ -->
+<div class="modal-overlay" id="modal-portas-vpn">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">🔧 Configurar Portas de Saída</span>
+      <button class="modal-close"
+              onclick="fecharModal('modal-portas-vpn')">✕</button>
+    </div>
+    <input type="hidden" id="portas-vpn-id">
+    <div class="form-group">
+      <label>Portas de saída (vírgula separadas)</label>
+      <input class="form-control" id="portas-vpn-input"
+             placeholder="80,443,8080">
+      <div style="font-size:.72rem;color:var(--text2);margin-top:.3rem">
+        Tráfego dessas portas será roteado pelo túnel VPN (tun0)
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost"
+              onclick="fecharModal('modal-portas-vpn')">Cancelar</button>
+      <button class="btn btn-primary"
+              onclick="salvarPortasVPN()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// ESTADO
+// ══════════════════════════════════════════════════════
+let interfaces      = [];
+let vpns            = [];
+let redesSalvas     = [];
+let modoSelecionado = 'direto';
+let statusAtual     = {};
+
+// ══════════════════════════════════════════════════════
+// UTILIDADES
+// ══════════════════════════════════════════════════════
+
+function atualizarClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('pt-BR');
+}
+setInterval(atualizarClock, 1000);
+atualizarClock();
+
+function toast(msg, tipo = 'info') {
+  const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el    = document.createElement('div');
+  el.className = `toast ${tipo}`;
+  el.innerHTML = `<span>${icons[tipo]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(() => el.remove(), 5000);
+}
+
+async function api(url, body = null, form = false) {
+  try {
+    const opts = { method: body ? 'POST' : 'GET' };
+    if (body && !form) {
+      opts.headers = {'Content-Type':'application/json'};
+      opts.body    = JSON.stringify(body);
+    } else if (form) {
+      opts.body = body;
+    }
+    const r = await fetch(url, opts);
+    return await r.json();
+  } catch(e) {
+    return { sucesso: false, erro: e.message };
+  }
+}
+
+function abrirModal(id) {
+  document.getElementById(id).classList.add('open');
+}
+function fecharModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function aba(nome) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    const ids = ['wan','wifi','redes','vpn','acesso','modo'];
+    b.classList.toggle('active', ids[i] === nome);
+  });
+  document.querySelectorAll('.tab-pane').forEach(p => {
+    p.classList.toggle('active', p.id === `pane-${nome}`);
+  });
+  // carregar dados da aba
+  if (nome === 'redes') carregarRedesSalvas();
+  if (nome === 'vpn')   carregarVPNs();
+  if (nome === 'acesso') carregarStatusAcesso();
+  if (nome === 'modo')  carregarModo();
+}
+
+function sinalizarBarras(sinal) {
+  const v = parseInt(sinal) || 0;
+  const barras = [
+    {h:'4px', on: v >= 20},
+    {h:'7px', on: v >= 40},
+    {h:'10px',on: v >= 60},
+    {h:'13px',on: v >= 80},
+  ];
+  return `<span class="sinal-bars">
+    ${barras.map(b =>
+      `<span style="height:${b.h}" class="${b.on?'on':''}"></span>`
+    ).join('')}
+  </span>`;
+}
+
+// ══════════════════════════════════════════════════════
+// CARREGAR TUDO
+// ══════════════════════════════════════════════════════
+
+async function carregarTudo() {
+  await Promise.all([
+    carregarInterfaces(),
+    carregarStatusConexao(),
+    carregarAlertas(),
+  ]);
+}
+
+async function carregarInterfaces() {
+  const d = await api('/api/conexao/interfaces');
+  if (!d.sucesso) return;
+  interfaces = d.interfaces || [];
+
+  // WAN select
+  const sWan = document.getElementById('wan-iface');
+  const sWifi = document.getElementById('wifi-iface');
+  const optsEth  = ['<option value="">Selecione...</option>'];
+  const optsWifi = ['<option value="">Selecione...</option>'];
+  interfaces.forEach(i => {
+    const op = `<option value="${i.nome}">
+      ${i.nome} (${i.tipo}) — ${i.ip||'sem IP'} — ${i.mac}
+    </option>`;
+    if (i.tipo === 'wifi') optsWifi.push(op);
+    else                   optsEth.push(op);
+    optsEth.push(op); // wan mostra todas
+  });
+  sWan.innerHTML  = optsEth.join('');
+  sWifi.innerHTML = optsWifi.join('');
+
+  // selecionar interface ativa
+  if (statusAtual.wan_interface) {
+    sWan.value  = statusAtual.wan_interface;
+    sWifi.value = statusAtual.wan_interface;
+  }
+}
+
+async function carregarStatusConexao() {
+  const d = await api('/api/conexao/status');
+  if (!d.sucesso) return;
+  statusAtual = d;
+
+  // status rápido
+  const wan = d.wan_interface || 'N/A';
+  const modo = d.wan_tipo || '';
+
+  document.getElementById('st-wan').innerHTML = wan !== 'N/A'
+    ? `<span class="dot dot-green"></span>${wan}
+       <span style="color:var(--text2);font-size:.75rem">
+         ${d.ssid_ativo ? '• ' + d.ssid_ativo : ''}
+       </span>`
+    : `<span class="dot dot-red"></span>Não configurada`;
+
+  document.getElementById('st-vpn').innerHTML = d.vpn_ativa
+    ? `<span class="dot dot-green"></span>${d.vpn_ativa.nome}
+       <span style="color:var(--text2);font-size:.75rem">
+         ${d.vpn_tun_ip ? '• ' + d.vpn_tun_ip : ''}
+       </span>`
+    : `<span class="dot dot-yellow"></span>Nenhuma`;
+
+  document.getElementById('st-ip').textContent =
+    d.ip_publico || '...';
+
+  // buscar IP público separado (pode demorar)
+  buscarIPPublico();
+
+  // status WAN detalhado
+  document.getElementById('wan-status-grid').innerHTML = `
+    <div class="info-item">
+      <div class="lbl">Interface</div>
+      <div class="val">${d.wan_interface||'N/A'}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Tipo</div>
+      <div class="val">${d.wan_tipo||'N/A'}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Modo IP</div>
+      <div class="val">${d.wan_modo_ip||'N/A'}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">SSID Ativo</div>
+      <div class="val">${d.ssid_ativo||'N/A'}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">MAC Atual</div>
+      <div class="val" style="font-family:monospace;font-size:.8rem">
+        ${d.mac_atual||'N/A'}
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Hostname DHCP</div>
+      <div class="val">${d.hostname_dhcp||'N/A'}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Modo Conexão</div>
+      <div class="val">${d.modo_nome||'Direto'}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Watchdog</div>
+      <div class="val">
+        ${d.watchdog_ativo
+          ? '<span class="badge badge-green">Ativo</span>'
+          : '<span class="badge badge-red">Inativo</span>'}
+      </div>
+    </div>
+  `;
+
+  // modo label
+  document.getElementById('modo-atual-label').textContent =
+    d.modo_nome || 'Direto';
+  modoSelecionado = d.modo || 'direto';
+  destacarModoAtual(modoSelecionado);
+}
+
+async function buscarIPPublico() {
+  try {
+    const r = await fetch('/api/status_geral');
+    const d = await r.json();
+    if (d.ip_publico) {
+      document.getElementById('st-ip').textContent = d.ip_publico;
+    }
+  } catch(e) {}
+}
+
+async function carregarAlertas() {
+  const d = await api('/api/conexao/alertas');
+  if (!d.sucesso) return;
+
+  const qtd = (d.alertas || []).length;
+  const el  = document.getElementById('alertaBox');
+  const cnt = document.getElementById('alerta-count');
+
+  if (qtd > 0) {
+    el.classList.remove('hidden');
+    document.getElementById('alertaTxt').textContent =
+      `⚠️ ${qtd} tentativa(s) não autorizada(s) detectada(s)`;
+    cnt.innerHTML = `<span class="badge badge-red">
+      🚨 ${qtd} alerta(s)
+    </span>`;
+  } else {
+    el.classList.add('hidden');
+    cnt.innerHTML = `<span class="badge badge-green">
+      ✓ Sem alertas
+    </span>`;
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// WAN
+// ══════════════════════════════════════════════════════
+
+function toggleWanFixo() {
+  const v = document.getElementById('wan-modo').value;
+  document.getElementById('wan-fixo-fields').style.display =
+    v === 'fixo' ? '' : 'none';
+}
+
+async function gerarMacWan() {
+  const d = await api('/api/conexao/gerar_mac');
+  if (d.sucesso) document.getElementById('wan-mac').value = d.mac;
+}
+
+async function configurarWan() {
+  const iface = document.getElementById('wan-iface').value;
+  if (!iface) { toast('Selecione uma interface', 'warning'); return; }
+
+  const dados = {
+    interface: iface,
+    tipo:      'ethernet',
+    modo:      document.getElementById('wan-modo').value,
+    mac:       document.getElementById('wan-mac').value,
+    hostname:  document.getElementById('wan-hostname').value,
+    ip:        document.getElementById('wan-ip').value,
+    mascara:   document.getElementById('wan-mask').value,
+    gateway:   document.getElementById('wan-gw').value,
+    dns:       document.getElementById('wan-dns').value,
+  };
+
+  toast('Configurando WAN...', 'info');
+  const d = await api('/api/conexao/configurar_wan', dados);
+
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    carregarStatusConexao();
+  } else {
+    toast(d.erro || 'Erro ao configurar', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// WIFI
+// ══════════════════════════════════════════════════════
+
+function toggleWifiFixo() {
+  const v = document.getElementById('wifi-modo').value;
+  document.getElementById('wifi-fixo-fields').style.display =
+    v === 'fixo' ? '' : 'none';
+}
+
+async function gerarMacWifi() {
+  const d = await api('/api/conexao/gerar_mac');
+  if (d.sucesso)
+    document.getElementById('wifi-mac').value = d.mac;
+}
+
+async function escanearWifi() {
+  const iface = document.getElementById('wifi-iface').value;
+  if (!iface) return;
+
+  document.getElementById('wifi-lista').innerHTML =
+    '<div class="loading-row"><span class="spin"></span> Escaneando...</div>';
+
+  const d = await api('/api/conexao/redes_wifi', {interface: iface});
+  const redes = d.redes || [];
+
+  if (!redes.length) {
+    document.getElementById('wifi-lista').innerHTML =
+      '<div class="loading-row">Nenhuma rede encontrada</div>';
+    return;
+  }
+
+  document.getElementById('wifi-lista').innerHTML =
+    redes.map(r => `
+      <div class="wifi-item" onclick="selecionarWifi('${r.ssid}')">
+        <div>
+          <div style="font-weight:600;font-size:.88rem">
+            ${r.ssid}
+          </div>
+          <div class="wifi-signal">
+            ${r.seguranca||'Aberta'}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:.5rem">
+          ${sinalizarBarras(r.sinal)}
+          <span class="wifi-signal">${r.sinal}%</span>
+        </div>
+      </div>
+    `).join('');
+}
+
+function selecionarWifi(ssid) {
+  document.getElementById('wifi-ssid').value = ssid;
+  // destacar selecionada
+  document.querySelectorAll('.wifi-item').forEach(el => {
+    el.classList.toggle('selecionada',
+      el.querySelector('.font-weight-600, div>div')
+        ?.textContent?.trim() === ssid);
+  });
+}
+
+async function conectarWifi() {
+  const iface = document.getElementById('wifi-iface').value;
+  const ssid  = document.getElementById('wifi-ssid').value.trim();
+  if (!iface) { toast('Selecione uma interface', 'warning'); return; }
+  if (!ssid)  { toast('Informe o SSID', 'warning'); return; }
+
+  const dados = {
+    interface: iface,
+    ssid,
+    senha:    document.getElementById('wifi-senha').value,
+    modo:     document.getElementById('wifi-modo').value,
+    mac:      document.getElementById('wifi-mac').value,
+    hostname: document.getElementById('wifi-hostname').value,
+    ip:       document.getElementById('wifi-ip').value,
+    mascara:  document.getElementById('wifi-mask').value,
+    gateway:  document.getElementById('wifi-gw').value,
+    dns:      document.getElementById('wifi-dns').value,
+  };
+
+  const btn = document.getElementById('btn-wifi-conectar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Conectando...';
+  toast(`Conectando a "${ssid}"...`, 'info');
+
+  const d = await api('/api/conexao/conectar_wifi', dados);
+  btn.disabled = false;
+  btn.innerHTML = '📶 Conectar';
+
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    carregarStatusConexao();
+    carregarRedesSalvas();
+  } else {
+    toast(d.erro || 'Erro ao conectar', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// REDES SALVAS
+// ══════════════════════════════════════════════════════
+
+async function carregarRedesSalvas() {
+  document.getElementById('redes-lista').innerHTML =
+    '<div class="loading-row"><span class="spin"></span> Carregando...</div>';
+
+  const d = await api('/api/conexao/redes_salvas');
+  redesSalvas = d.redes || [];
+
+  if (!redesSalvas.length) {
+    document.getElementById('redes-lista').innerHTML =
+      '<div class="loading-row" style="color:var(--text2)">Nenhuma rede salva</div>';
+    return;
+  }
+
+  document.getElementById('redes-lista').innerHTML =
+    redesSalvas.map(r => `
+      <div class="rede-item">
+        <div style="font-size:1.3rem;flex-shrink:0">
+          ${r.tipo === 'wifi' ? '📶' : '🔌'}
+        </div>
+        <div class="rede-info">
+          <div class="rede-nome">
+            ${r.ssid || r.interface}
+            ${r.tipo === 'wifi'
+              ? `<span style="color:var(--text2);font-size:.78rem">
+                   • ${r.interface}
+                 </span>`
+              : ''}
+          </div>
+          <div class="rede-meta">
+            ${r.modo === 'fixo'
+              ? `IP: ${r.ip}/${r.mascara}`
+              : 'DHCP'}
+            ${r.mac_atual
+              ? `• MAC: <span style="font-family:monospace">
+                   ${r.mac_atual}
+                 </span>`
+              : ''}
+            ${r.hostname ? `• Host: ${r.hostname}` : ''}
+            ${r.salvo_em || r.atualizado_em
+              ? `• ${r.atualizado_em || r.salvo_em}`
+              : ''}
+          </div>
+        </div>
+        <div class="rede-actions">
+          <button class="btn btn-success btn-sm"
+                  onclick="reconectarRede('${r.id}')"
+                  title="Reconectar">
+            ▶
+          </button>
+          <button class="btn btn-ghost btn-sm"
+                  onclick="editarRede('${r.id}')"
+                  title="Editar">
+            ✏️
+          </button>
+          <button class="btn btn-danger btn-sm"
+                  onclick="removerRede('${r.id}')"
+                  title="Remover">
+            🗑
+          </button>
+        </div>
+      </div>
+    `).join('');
+}
+
+async function reconectarRede(id) {
+  toast('Reconectando...', 'info');
+  const d = await api('/api/conexao/reconectar_rede', {id});
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    carregarStatusConexao();
+  } else {
+    toast(d.erro || 'Erro ao reconectar', 'error');
+  }
+}
+
+async function removerRede(id) {
+  if (!confirm('Remover esta rede salva?')) return;
+  const d = await api('/api/conexao/remover_rede', {id});
+  if (d.sucesso) {
+    toast('Rede removida', 'success');
+    carregarRedesSalvas();
+  } else {
+    toast(d.erro || 'Erro', 'error');
+  }
+}
+
+function editarRede(id) {
+  const r = redesSalvas.find(x => x.id === id);
+  if (!r) return;
+
+  document.getElementById('edit-rede-id').value       = r.id;
+  document.getElementById('edit-rede-tipo').value     = r.tipo;
+  document.getElementById('edit-rede-modo').value     = r.modo||'dhcp';
+  document.getElementById('edit-rede-ip').value       = r.ip||'';
+  document.getElementById('edit-rede-mask').value     = r.mascara||'24';
+  document.getElementById('edit-rede-gw').value       = r.gateway||'';
+  document.getElementById('edit-rede-dns').value      = r.dns||'';
+  document.getElementById('edit-rede-mac').value      = r.mac||'';
+  document.getElementById('edit-rede-hostname').value = r.hostname||'';
+  document.getElementById('edit-rede-senha').value    = '';
+
+  // mostrar campo senha apenas wifi
+  document.getElementById('edit-wifi-fields').style.display =
+    r.tipo === 'wifi' ? '' : 'none';
+
+  toggleEditFixo();
+  abrirModal('modal-editar-rede');
+}
+
+function toggleEditFixo() {
+  const v = document.getElementById('edit-rede-modo').value;
+  document.getElementById('edit-fixo-fields').style.display =
+    v === 'fixo' ? '' : 'none';
+}
+
+async function gerarMacEdit() {
+  const d = await api('/api/conexao/gerar_mac');
+  if (d.sucesso)
+    document.getElementById('edit-rede-mac').value = d.mac;
+}
+
+async function salvarEdicaoRede() {
+  const id   = document.getElementById('edit-rede-id').value;
+  const tipo = document.getElementById('edit-rede-tipo').value;
+
+  const dados = {
+    id,
+    modo:     document.getElementById('edit-rede-modo').value,
+    ip:       document.getElementById('edit-rede-ip').value,
+    mascara:  document.getElementById('edit-rede-mask').value,
+    gateway:  document.getElementById('edit-rede-gw').value,
+    dns:      document.getElementById('edit-rede-dns').value,
+    mac:      document.getElementById('edit-rede-mac').value,
+    hostname: document.getElementById('edit-rede-hostname').value,
+  };
+
+  if (tipo === 'wifi') {
+    const senha = document.getElementById('edit-rede-senha').value;
+    if (senha) dados.senha = senha;
+  }
+
+  const d = await api('/api/conexao/editar_rede', dados);
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    fecharModal('modal-editar-rede');
+    carregarRedesSalvas();
+  } else {
+    toast(d.erro || 'Erro ao salvar', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// VPN SAÍDA
+// ══════════════════════════════════════════════════════
+
+async function importarVPN() {
+  const nome = document.getElementById('vpn-nome').value.trim();
+  const arq  = document.getElementById('vpn-arquivo').files[0];
+  if (!nome) { toast('Informe o nome da VPN', 'warning'); return; }
+  if (!arq)  { toast('Selecione o arquivo .ovpn', 'warning'); return; }
+
+  const form = new FormData();
+  form.append('nome',   nome);
+  form.append('arquivo', arq);
+  form.append('usuario', document.getElementById('vpn-user').value);
+  form.append('senha',   document.getElementById('vpn-pass').value);
+
+  toast('Importando VPN...', 'info');
+  const r = await fetch('/api/conexao/vpn/importar',
+    {method:'POST', body: form});
+  const d = await r.json();
+
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    document.getElementById('vpn-nome').value    = '';
+    document.getElementById('vpn-arquivo').value = '';
+    carregarVPNs();
+  } else {
+    toast(d.erro || 'Erro ao importar', 'error');
+  }
+}
+
+async function carregarVPNs() {
+  document.getElementById('vpn-lista').innerHTML =
+    '<div class="loading-row"><span class="spin"></span> Carregando...</div>';
+
+  const d = await api('/api/conexao/vpn/listar');
+  vpns = d.vpns || [];
+
+  // popular select do modo
+  const sel = document.getElementById('modo-vpn-select');
+  sel.innerHTML = vpns.length
+    ? vpns.map(v =>
+        `<option value="${v.id}">${v.nome} — ${v.ip_servidor||'?'}</option>`
+      ).join('')
+    : '<option value="">Nenhuma VPN importada</option>';
+
+  if (!vpns.length) {
+    document.getElementById('vpn-lista').innerHTML =
+      '<div class="loading-row" style="color:var(--text2)">Nenhuma VPN importada</div>';
+    return;
+  }
+
+  document.getElementById('vpn-lista').innerHTML =
+    vpns.map(v => `
+      <div class="vpn-item ${v.ativa ? 'ativa' : ''}">
+        <div class="vpn-header">
+          <div style="display:flex;align-items:center;gap:.75rem">
+            <span style="font-size:1.3rem">
+              ${v.ativa ? '🟢' : '⚪'}
+            </span>
+            <div>
+              <div class="vpn-nome">${v.nome}</div>
+              <div class="vpn-meta">
+                <span>🌐 ${v.ip_servidor||'?'}:${v.porta||'?'}</span>
+                <span>📡 ${v.protocolo||'udp'}</span>
+                <span>📅 ${v.importado_em||''}</span>
+              </div>
+            </div>
+          </div>
+          <div class="vpn-actions">
+            ${v.ativa
+              ? `<button class="btn btn-danger btn-sm"
+                         onclick="desconectarVPN()">
+                   ⏹ Desconectar
+                 </button>`
+              : `<button class="btn btn-success btn-sm"
+                         onclick="conectarVPN('${v.id}')">
+                   ▶ Conectar
+                 </button>`
+            }
+            <button class="btn btn-ghost btn-sm"
+                    onclick="abrirPortasVPN('${v.id}',
+                      '${(v.portas_saida||[]).join(',')}')">
+              🔧 Portas
+            </button>
+            <button class="btn btn-danger btn-sm"
+                    onclick="removerVPN('${v.id}')">
+              🗑
+            </button>
+          </div>
+        </div>
+        ${v.ativa && v.tun_ip
+          ? `<div style="font-size:.78rem;color:var(--success);
+                         margin-top:.25rem">
+               IP do túnel: ${v.tun_ip}
+             </div>`
+          : ''}
+        <div style="font-size:.75rem;color:var(--text2);margin-top:.4rem">
+          Portas de saída: ${(v.portas_saida||[]).join(', ')||'80, 443'}
+        </div>
+      </div>
+    `).join('');
+}
+
+async function conectarVPN(id) {
+  toast('Conectando VPN... (pode levar até 60s)', 'info');
+  const d = await api('/api/conexao/vpn/conectar', {id});
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    carregarVPNs();
+    carregarStatusConexao();
+  } else {
+    toast(d.erro || 'Erro ao conectar VPN', 'error');
+  }
+}
+
+async function desconectarVPN() {
+  toast('Desconectando VPN...', 'info');
+  const d = await api('/api/conexao/vpn/desconectar', {});
+  if (d.sucesso) {
+    toast('VPN desconectada', 'success');
+    carregarVPNs();
+    carregarStatusConexao();
+  } else {
+    toast(d.erro || 'Erro', 'error');
+  }
+}
+
+async function ativarModoVPNAuto() {
+  toast('Testando latência das VPNs...', 'info');
+  const d = await api('/api/conexao/modo', {modo:'vpn_auto'});
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    carregarVPNs();
+    carregarStatusConexao();
+  } else {
+    toast(d.erro || 'Erro', 'error');
+  }
+}
+
+async function removerVPN(id) {
+  if (!confirm('Remover esta VPN?')) return;
+  const d = await api('/api/conexao/vpn/remover', {id});
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    carregarVPNs();
+  } else {
+    toast(d.erro || 'Erro', 'error');
+  }
+}
+
+function abrirPortasVPN(id, portas) {
+  document.getElementById('portas-vpn-id').value    = id;
+  document.getElementById('portas-vpn-input').value = portas;
+  abrirModal('modal-portas-vpn');
+}
+
+async function salvarPortasVPN() {
+  const id     = document.getElementById('portas-vpn-id').value;
+  const portas = document.getElementById('portas-vpn-input').value
+    .split(',').map(p => p.trim()).filter(Boolean);
+
+  const d = await api('/api/conexao/vpn/portas_saida', {id, portas});
+  if (d.sucesso) {
+    toast('Portas atualizadas', 'success');
+    fecharModal('modal-portas-vpn');
+    carregarVPNs();
+  } else {
+    toast(d.erro || 'Erro', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// VPN ACESSO
+// ══════════════════════════════════════════════════════
+
+async function carregarStatusAcesso() {
+  const d = await api('/api/conexao/vpn_acesso/status');
+  if (!d.sucesso) return;
+
+  document.getElementById('acc-modo').value  = d.modo || 'ip_publico';
+  document.getElementById('acc-portas').value =
+    (d.portas || ['2000']).join(',');
+
+  document.getElementById('acc-status-grid').innerHTML = `
+    <div class="info-item">
+      <div class="lbl">Status</div>
+      <div class="val">
+        ${d.ativa
+          ? '<span class="badge badge-green">Ativo</span>'
+          : '<span class="badge badge-gray">Inativo</span>'}
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Processo</div>
+      <div class="val">
+        ${d.rodando
+          ? '<span class="badge badge-green">Rodando</span>'
+          : '<span class="badge badge-red">Parado</span>'}
+      </div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">Modo</div>
+      <div class="val">${d.modo||'N/A'}</div>
+    </div>
+    <div class="info-item">
+      <div class="lbl">IP Público</div>
+      <div class="val" style="font-family:monospace;font-size:.85rem">
+        ${d.ip_publico_servidor||'N/A'}
+      </div>
+    </div>
+    <div class="info-item" style="grid-column:span 2">
+      <div class="lbl">Portas Liberadas</div>
+      <div class="val">${(d.portas||[]).join(', ')||'N/A'}</div>
+    </div>
+  `;
+}
+
+async function configurarVPNAcesso() {
+  const portas = document.getElementById('acc-portas').value
+    .split(',').map(p => p.trim()).filter(Boolean);
+  const d = await api('/api/conexao/vpn_acesso/configurar', {
+    modo:   document.getElementById('acc-modo').value,
+    portas
+  });
+  if (d.sucesso) {
+    toast('Configuração salva', 'success');
+    carregarStatusAcesso();
+  } else {
+    toast(d.erro || 'Erro', 'error');
+  }
+}
+
+async function ativarVPNAcesso() {
+  toast('Ativando servidor VPN... (pode levar ~2min)', 'info');
+  const d = await api('/api/conexao/vpn_acesso/ativar', {});
+  if (d.sucesso) {
+    toast(`Servidor ativo! Endereço: ${d.servidor_addr}:${d.porta_vpn}`, 'success');
+    carregarStatusAcesso();
+  } else {
+    toast(d.erro || 'Erro ao ativar', 'error');
+  }
+}
+
+async function desativarVPNAcesso() {
+  const d = await api('/api/conexao/vpn_acesso/desativar', {});
+  if (d.sucesso) {
+    toast('Servidor VPN desativado', 'success');
+    carregarStatusAcesso();
+  } else {
+    toast(d.erro || 'Erro', 'error');
+  }
+}
+
+async function baixarOVPN() {
+  window.location.href = '/api/conexao/vpn_acesso/baixar_ovpn';
+}
+
+// ══════════════════════════════════════════════════════
+// MODO
+// ══════════════════════════════════════════════════════
+
+function carregarModo() {
+  carregarVPNs();
+  destacarModoAtual(modoSelecionado);
+}
+
+function selecionarModo(modo) {
+  modoSelecionado = modo;
+  destacarModoAtual(modo);
+}
+
+function destacarModoAtual(modo) {
+  ['direto','vpn','vpn_auto'].forEach(m => {
+    const el = document.getElementById(`modo-card-${m}`);
+    if (!el) return;
+    el.style.borderColor =
+      m === modo ? 'var(--accent)' : 'var(--border)';
+    el.style.background  =
+      m === modo ? 'var(--bg4)' : 'var(--bg3)';
+  });
+}
+
+async function aplicarModo() {
+  const vpnId = modoSelecionado === 'vpn'
+    ? document.getElementById('modo-vpn-select').value
+    : null;
+
+  if (modoSelecionado === 'vpn' && !vpnId) {
+    toast('Selecione uma VPN', 'warning');
+    return;
+  }
+
+  const btn = document.getElementById('btn-aplicar-modo');
+  btn.disabled    = true;
+  btn.textContent = '⏳ Aplicando...';
+
+  toast(`Aplicando modo: ${modoSelecionado}...`, 'info');
+  const d = await api('/api/conexao/modo', {
+    modo:   modoSelecionado,
+    vpn_id: vpnId
+  });
+
+  btn.disabled    = false;
+  btn.textContent = '⚡ Aplicar Modo';
+
+  if (d.sucesso) {
+    toast(d.mensagem, 'success');
+    carregarStatusConexao();
+    carregarVPNs();
+  } else {
+    toast(d.erro || 'Erro', 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// ALERTAS SEGURANÇA
+// ══════════════════════════════════════════════════════
+
+async function verAlertas() {
+  const d = await api('/api/conexao/alertas');
+  const alertas = d.alertas || [];
+  document.getElementById('alertas-lista').innerHTML =
+    alertas.length
+      ? alertas.map(a =>
+          `<div style="color:var(--warning);margin-bottom:.3rem">${a}</div>`
+        ).join('')
+      : '<div style="color:var(--text2)">Nenhum alerta</div>';
+  abrirModal('modal-alertas');
+}
+
+async function limparAlertas() {
+  await api('/api/conexao/limpar_alertas', {});
+  toast('Alertas limpos', 'success');
+  fecharModal('modal-alertas');
+  carregarAlertas();
+}
+
+// ══════════════════════════════════════════════════════
+// INICIALIZAR
+// ══════════════════════════════════════════════════════
+carregarTudo();
+setInterval(carregarStatusConexao, 30000);
+setInterval(carregarAlertas, 60000);
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# RRFS Servidores v2.5 - Dependências Python
+# Instalar: pip3 install -r requirements.txt
+# (o instalador usa um ambiente virtual em <instalação>/venv)
+
+# Web Framework
+flask>=3.0.0
+
+# Segurança
+itsdangerous>=2.1.2
+werkzeug>=3.0.0
+
+# Login do painel (autenticação PAM do usuário root)
+python-pam>=2.0.2
+
+# Acesso SSH remoto via Tox
+paramiko>=3.4.0
+
+# Utilitários
+packaging>=23.0
+
+# Porta Tox 33445-33545

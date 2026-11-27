@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RRFS Servidores</title>
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<link rel="stylesheet" href="/static/xterm.css">
+<style>
+  body{background:#121212;color:#eee;font-family:Segoe UI,Arial,sans-serif;margin:0;padding:20px}
+  h1{color:#4fd1c5;display:flex;justify-content:space-between;align-items:center;font-size:22px;margin:0 0 12px;flex-wrap:wrap;gap:10px}
+  .titulo{display:flex;align-items:center;gap:10px}
+  .logo{height:38px;width:38px;border-radius:9px;box-shadow:0 0 0 1px #333}
+  .barra{display:flex;gap:8px;flex-wrap:wrap}
+  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:20px}
+  .cartao{background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:16px;display:flex;flex-direction:column}
+  .cartao h3{margin:0 0 8px;color:#4fd1c5}
+  .cartao p{color:#aaa;font-size:14px;min-height:40px;margin:0 0 10px}
+  .btn,button{padding:8px 14px;background:#4fd1c5;border:none;border-radius:6px;color:#111;font-weight:bold;cursor:pointer;text-decoration:none;text-align:center;font-size:14px}
+  .cartao .btn,.cartao button{margin-top:auto}
+  .sec{background:#555;color:#eee}
+  .status{font-size:13px;margin:0 0 10px}
+  .ok{color:#6bffb0}.aviso{color:#f6c343}.erro{color:#ff6b6b}
+  .diag{background:#1e1e1e;border:1px solid #333;border-radius:8px;padding:12px 14px;font-size:14px;color:#ccc;margin-top:14px}
+  .id{font-family:monospace;font-size:12px;color:#888;word-break:break-all;margin-top:14px}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center}
+  .oculto{display:none}
+  .modal-conteudo{background:#1e1e1e;padding:20px;border-radius:10px;width:760px;max-width:96%}
+  .modal-conteudo input{width:100%;box-sizing:border-box;margin-bottom:10px;padding:8px;background:#2a2a2a;border:1px solid #444;color:#eee;border-radius:6px}
+  #terminal-ssh{height:430px;background:#000;border-radius:6px;padding:6px;overflow:hidden}
+</style>
+</head>
+<body>
+<h1>
+  <span class="titulo"><img src="/static/logo.png" alt="RRFS Servidores" class="logo"> RRFS Servidores</span>
+  <span class="barra">
+    <button class="sec" onclick="atualizarNos(this)" title="Baixa a lista pública de nós Tox (precisa de internet)">⬇ Nós Tox</button>
+    <button class="sec" onclick="sair()">Sair</button>
+  </span>
+</h1>
+
+<p class="status" id="status">Carregando…</p>
+<div class="diag" id="diag" style="display:none"></div>
+<div class="grade" id="grade"></div>
+<div class="id">Meu ID Tox (cliente): <span id="meuId">--</span></div>
+
+<div id="modal-ssh" class="modal oculto">
+  <div class="modal-conteudo">
+    <div id="form-ssh-login">
+      <h3>Login SSH</h3>
+      <input id="ssh-usuario" placeholder="usuário" autocomplete="off">
+      <input id="ssh-senha" type="password" placeholder="senha" autocomplete="off" onkeydown="if(event.key==='Enter')iniciarSSH()">
+      <button onclick="iniciarSSH()">Conectar</button>
+      <button class="sec" onclick="fecharModal()">Cancelar</button>
+    </div>
+    <div id="area-term" style="display:none">
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><b>Terminal SSH</b><button class="sec" onclick="fecharModal()">Fechar</button></div>
+      <div id="terminal-ssh"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/static/xterm.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let ultimo='';
+
+function diagnostico(e){
+  if(!e.sessao)return 'Sem servidor configurado. Saia e informe o ID Tox do servidor.';
+  if(e.status_rede===0)return `Sem conexão com a rede Tox. ${e.nos_bootstrap?`Tentando ${e.nos_bootstrap} nós de bootstrap…`:'Nenhum nó de bootstrap salvo: clique em "⬇ Nós Tox" (precisa de internet) ou use a mesma rede local do servidor.'}`;
+  if(!e.conectado)return `Rede Tox OK, mas o servidor (${esc(e.servidor_id)}) não está conectado. Verifique: (1) o Tox está ativo no servidor; (2) o pedido de amizade foi APROVADO no painel do servidor (Acesso Remoto Tox → Amigos); (3) o ID informado está correto. Meu ID para aprovar: veja abaixo.`;
+  if(!e.lista_ok)return 'Servidor conectado. Consultando a lista de serviços…';
+  if(!e.servicos.length)return 'O servidor respondeu, mas não há serviços publicados. No painel do servidor: Acesso Remoto Tox → Serviços → clique em "Ativar" no serviço desejado.';
+  return '';
+}
+
+function render(e){
+  const rede=e.status_rede===0?'<span class="erro">● Offline da rede Tox</span>'
+    :e.status_rede===1?'<span class="aviso">● Rede Tox via TCP (retransmissor)</span>'
+    :'<span class="ok">● Rede Tox via UDP (direto)</span>';
+  $('status').innerHTML=rede+' &nbsp;|&nbsp; '+(e.conectado?'<span class="ok">Servidor: online</span>':'<span class="erro">Servidor: offline</span>');
+  const d=diagnostico(e);
+  $('diag').style.display=d?'block':'none';$('diag').innerHTML=d;
+  $('meuId').textContent=e.meu_id||'--';
+  const base=location.port?':'+location.port:'';
+  const html=(e.servicos||[]).map(s=>{
+    const acao=s.tipo==='ssh'
+      ?`<button onclick="abrirSSH()">Abrir Terminal</button>`
+      :`<a class="btn" target="_blank" rel="noopener" href="http://s-${encodeURIComponent(s.id)}.localhost${base}/">Abrir</a>`;
+    return `<div class="cartao"><h3>${esc(s.nome)}</h3><p>${esc(s.comentario||'')}</p>${acao}</div>`}).join('');
+  if(html!==ultimo){$('grade').innerHTML=html;ultimo=html}
+}
+
+async function atualizar(){
+  try{const r=await fetch('/api/estado');if(r.status===200)render(await r.json())}
+  catch(e){$('status').innerHTML='<span class="erro">Cliente local não responde</span>'}
+}
+
+async function atualizarNos(b){b.disabled=true;b.textContent='Buscando…';
+  try{const d=await (await fetch('/api/bootstrap/atualizar',{method:'POST'})).json();
+    alert(d.ok?`Lista atualizada (+${d.novos} nós).`:'Sem acesso à lista online (sem internet?).')}catch(e){alert('Erro')}
+  b.disabled=false;b.textContent='⬇ Nós Tox';atualizar()}
+
+async function sair(){await fetch('/api/logout',{method:'POST'});location.href='/login'}
+
+// ── SSH ──
+let sock=null,term=null;
+function abrirSSH(){$('modal-ssh').classList.remove('oculto');$('ssh-usuario').focus()}
+function fecharModal(){
+  $('modal-ssh').classList.add('oculto');
+  if(sock){try{sock.send(JSON.stringify({tipo:'fechar'}))}catch(e){}sock.close();sock=null}
+  if(term){term.dispose();term=null}
+  $('form-ssh-login').style.display='block';$('area-term').style.display='none';
+  $('terminal-ssh').innerHTML='';$('ssh-senha').value='';
+}
+function iniciarSSH(){
+  const usuario=$('ssh-usuario').value,senha=$('ssh-senha').value;
+  if(!usuario)return;
+  if(typeof Terminal==='undefined'){alert('xterm.js não carregou (static/xterm.js ausente).');return}
+  $('form-ssh-login').style.display='none';$('area-term').style.display='block';
+  term=new Terminal({cols:80,rows:24,fontSize:14,cursorBlink:true,theme:{background:'#000',foreground:'#eee'}});
+  term.open($('terminal-ssh'));term.focus();
+  term.write('Conectando via Tox…\r\n');
+  sock=new WebSocket((location.protocol==='https:'?'wss://':'ws://')+location.host+'/ws/ssh');
+  sock.onopen=()=>sock.send(JSON.stringify({usuario,senha}));
+  sock.onmessage=ev=>{
+    const m=JSON.parse(ev.data);
+    if(m.tipo==='dados'){const b=atob(m.dados),u=new Uint8Array(b.length);for(let i=0;i<b.length;i++)u[i]=b.charCodeAt(i);term.write(u)}
+    else if(m.tipo==='conectado')term.write('\x1b[32mConectado.\x1b[0m\r\n');
+    else if(m.tipo==='erro')term.write('\r\n\x1b[31m[ERRO] '+(m.mensagem||'')+'\x1b[0m\r\n');
+    else if(m.tipo==='fechado')term.write('\r\n[Sessão encerrada]\r\n');
+  };
+  sock.onclose=()=>{if(term)term.write('\r\n[Conexão com o cliente encerrada]\r\n')};
+  term.onData(d=>{if(sock&&sock.readyState===1)sock.send(JSON.stringify({tipo:'tecla',dados:d}))});
+}
+
+atualizar();setInterval(atualizar,3000);
+</script>
+</body>
+</html>

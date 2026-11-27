@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"><title>Acesso Remoto</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css">
+<style>
+  body{background:#121212;color:#eee;font-family:Segoe UI,Arial,sans-serif;margin:0;padding:20px;}
+  h1{color:#4fd1c5;display:flex;justify-content:space-between;align-items:center;font-size:22px;}
+  .grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:20px;}
+  .cartao{background:#1e1e1e;border:1px solid #333;border-radius:10px;padding:16px;}
+  .cartao h3{margin:0 0 8px 0;color:#4fd1c5;}
+  .cartao p{color:#aaa;font-size:14px;min-height:40px;}
+  button{padding:8px 14px;background:#4fd1c5;border:none;border-radius:6px;color:#111;font-weight:bold;cursor:pointer;width:100%;}
+  button.sair{width:auto;background:#555;color:#eee;}
+  .status{font-size:13px;margin-bottom:10px;}
+  .ok{color:#6bffb0;} .aviso{color:#f6c343;} .erro{color:#ff6b6b;}
+  .modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);display:flex;align-items:center;justify-content:center;}
+  .modal.oculto{display:none;}
+  .modal-conteudo{background:#1e1e1e;padding:20px;border-radius:10px;width:700px;max-width:95%;}
+  .modal-conteudo input{width:100%;margin-bottom:10px;padding:8px;background:#2a2a2a;border:1px solid #444;color:#eee;border-radius:6px;}
+</style>
+</head>
+<body>
+<h1>📡 Acesso Remoto <button class="sair" onclick="sair()">Sair</button></h1>
+
+<p class="status">
+  {% if status_rede == 0 %}<span class="erro">● Offline da rede Tox</span>
+  {% elif status_rede == 1 %}<span class="aviso">● Conectado via TCP (retransmissor)</span>
+  {% else %}<span class="ok">● Conectado via UDP (direto)</span>{% endif %}
+  &nbsp;|&nbsp;
+  {% if conectado %}<span class="ok">Servidor: online</span>{% else %}<span class="erro">Servidor: offline</span>{% endif %}
+</p>
+
+<div class="grade">
+{% for s in servicos %}
+  <div class="cartao">
+    <h3>{{ s.nome }}</h3>
+    <p>{{ s.comentario }}</p>
+    {% if s.tipo == 'ssh' %}
+      <button onclick="abrirSSH()">Abrir Terminal</button>
+    {% else %}
+      <button onclick="window.open('/proxy/{{ s.id }}/','_blank')">Abrir</button>
+    {% endif %}
+  </div>
+{% else %}
+  <p>Nenhum serviço disponível (servidor offline ou nenhum serviço ativado).</p>
+{% endfor %}
+</div>
+
+<div id="modal-ssh" class="modal oculto">
+  <div class="modal-conteudo">
+    <div id="form-ssh-login">
+      <h3>Login SSH</h3>
+      <input id="ssh-usuario" placeholder="usuário">
+      <input id="ssh-senha" type="password" placeholder="senha">
+      <button onclick="iniciarSSH()">Conectar</button>
+      <button class="sair" onclick="fecharModal()">Cancelar</button>
+    </div>
+    <div id="terminal-ssh" style="display:none;height:420px;background:#000;border-radius:6px;padding:6px;"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+<script>
+let socketSSH=null, termSSH=null;
+function abrirSSH(){ document.getElementById('modal-ssh').classList.remove('oculto'); }
+function fecharModal(){
+  document.getElementById('modal-ssh').classList.add('oculto');
+  if(socketSSH){ socketSSH.close(); socketSSH=null; }
+  document.getElementById('form-ssh-login').style.display='block';
+  document.getElementById('terminal-ssh').style.display='none';
+  document.getElementById('terminal-ssh').innerHTML='';
+}
+function iniciarSSH(){
+  const usuario = document.getElementById('ssh-usuario').value;
+  const senha = document.getElementById('ssh-senha').value;
+  document.getElementById('form-ssh-login').style.display='none';
+  const div = document.getElementById('terminal-ssh');
+  div.style.display='block';
+  termSSH = new Terminal({theme:{background:'#000000', foreground:'#eeeeee'}, fontSize:14});
+  termSSH.open(div);
+  const proto = (location.protocol==='https:')?'wss://':'ws://';
+  socketSSH = new WebSocket(proto+location.host+'/ws/ssh');
+  socketSSH.onopen = () => socketSSH.send(JSON.stringify({usuario, senha}));
+  socketSSH.onmessage = (ev) => {
+    const msg = JSON.parse(ev.data);
+    if(msg.tipo==='dados'){ termSSH.write(atob(msg.dados)); }
+    else if(msg.tipo==='erro'){ termSSH.write('\r\n[ERRO] '+msg.mensagem+'\r\n'); }
+    else if(msg.tipo==='fechado'){ termSSH.write('\r\n[Sessao encerrada]\r\n'); }
+  };
+  termSSH.onData(d => { if(socketSSH && socketSSH.readyState===1) socketSSH.send(JSON.stringify({tipo:'tecla', dados:d})); });
+}
+async function sair(){ await fetch('/api/logout',{method:'POST'}); window.location.href='/login'; }
+setInterval(()=>{ fetch('/api/status').then(r=>r.json()); }, 10000);
+</script>
+</body>
+</html>

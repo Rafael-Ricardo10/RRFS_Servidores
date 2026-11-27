@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8"><title>Login</title>
+<style>
+  body{background:#121212;color:#eee;font-family:Segoe UI,Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+  .caixa{background:#1e1e1e;padding:30px;border-radius:10px;width:460px;box-shadow:0 0 20px rgba(0,0,0,.5);}
+  h2{margin-top:0;color:#4fd1c5;}
+  textarea{width:100%;background:#2a2a2a;color:#eee;border:1px solid #444;border-radius:6px;padding:10px;min-height:70px;font-family:monospace;}
+  button{margin-top:12px;width:100%;padding:10px;background:#4fd1c5;border:none;border-radius:6px;color:#111;font-weight:bold;cursor:pointer;}
+  .erro{color:#ff6b6b;margin-top:10px;}
+  p{font-size:13px;color:#999;}
+</style>
+</head>
+<body>
+<div class="caixa">
+  <h2>🔑 Conectar ao Servidor (Tox)</h2>
+  <p>Cole o ID Tox (76 caracteres) exibido no painel do servidor:</p>
+  <textarea id="endereco" placeholder="Endereço Tox (hex)..."></textarea>
+  <button onclick="entrar()">Conectar</button>
+  <div class="erro" id="erro"></div>
+</div>
+<script>
+async function entrar(){
+  const endereco = document.getElementById('endereco').value.trim();
+  const erroDiv = document.getElementById('erro'); erroDiv.textContent = '';
+  try{
+    const resp = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({endereco})});
+    const dados = await resp.json();
+    if(dados.ok){ window.location.href = '/'; } else { erroDiv.textContent = dados.erro || 'Falha'; }
+  }catch(e){ erroDiv.textContent = 'Erro: ' + e; }
+}
+</script>
+</body>
+</html>

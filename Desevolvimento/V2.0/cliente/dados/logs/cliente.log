@@ -1,0 +1,46 @@
+[2026-10-20T23:59:55] [Tox] Identidade cliente pronta. ID: 6D5CB6DC87B49E1AF31A607A8BE4B007A3D077A442B885A823F40B725F742A10000336111239
+[2026-10-20T23:59:55] [Tox] Erro bootstrap {'ip': '85.172.30.117', 'porta': 33445, 'chave_publica': '8E7D0B859922EF569298B4D261A8CCB5FEA14FB91ED412A7603A585A25698B2', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-20T23:59:55] [Tox] Erro bootstrap {'ip': '46.101.197.175', 'porta': 33445, 'chave_publica': 'CD133B521159541FB1D326DE9850F5E56A6C724B5B5E5F7BAEA6EDD6C8F8C3D', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-20T23:59:55] [Tox] Erro bootstrap {'ip': '144.217.167.73', 'porta': 33445, 'chave_publica': '7E5668E0EE09E19F320AD47902419331FFEE147BB3606769CFBE921A7373C6D', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-20T23:59:55] [Tox] Erro bootstrap {'ip': '198.98.51.198', 'porta': 33445, 'chave_publica': '1D5A5F2F5D6233058BF0259B09622FB40B482E4FA0931F1D0724D5C9537A5A4', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-20T23:59:55] Cliente de acesso remoto via Tox iniciado.
+[2026-10-20T23:59:55] [Tox] Erro bootstrap {'ip': '85.172.30.117', 'porta': 33445, 'chave_publica': '8E7D0B859922EF569298B4D261A8CCB5FEA14FB91ED412A7603A585A25698B2', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-20T23:59:55] [Tox] Erro bootstrap {'ip': '46.101.197.175', 'porta': 33445, 'chave_publica': 'CD133B521159541FB1D326DE9850F5E56A6C724B5B5E5F7BAEA6EDD6C8F8C3D', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-20T23:59:55] [Tox] Erro bootstrap {'ip': '144.217.167.73', 'porta': 33445, 'chave_publica': '7E5668E0EE09E19F320AD47902419331FFEE147BB3606769CFBE921A7373C6D', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-20T23:59:55] [Tox] Erro bootstrap {'ip': '198.98.51.198', 'porta': 33445, 'chave_publica': '1D5A5F2F5D6233058BF0259B09622FB40B482E4FA0931F1D0724D5C9537A5A4', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:01:21] [Tox] Status da rede: Conectado(UDP)
+[2026-10-21T00:01:43] [Tox] Servidor (amigo 0): conectado(UDP)
+[2026-10-21T00:03:18] [Tox] Identidade cliente pronta. ID: 6D5CB6DC87B49E1AF31A607A8BE4B007A3D077A442B885A823F40B725F742A10000336111239
+[2026-10-21T00:03:18] [Tox] Erro bootstrap {'ip': '85.172.30.117', 'porta': 33445, 'chave_publica': '8E7D0B859922EF569298B4D261A8CCB5FEA14FB91ED412A7603A585A25698B2', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:03:18] [Tox] Erro bootstrap {'ip': '46.101.197.175', 'porta': 33445, 'chave_publica': 'CD133B521159541FB1D326DE9850F5E56A6C724B5B5E5F7BAEA6EDD6C8F8C3D', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:03:18] [Tox] Erro bootstrap {'ip': '144.217.167.73', 'porta': 33445, 'chave_publica': '7E5668E0EE09E19F320AD47902419331FFEE147BB3606769CFBE921A7373C6D', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:03:18] [Tox] Erro bootstrap {'ip': '198.98.51.198', 'porta': 33445, 'chave_publica': '1D5A5F2F5D6233058BF0259B09622FB40B482E4FA0931F1D0724D5C9537A5A4', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:03:18] Cliente de acesso remoto via Tox iniciado.
+[2026-10-21T00:03:18] [Tox] Erro bootstrap {'ip': '85.172.30.117', 'porta': 33445, 'chave_publica': '8E7D0B859922EF569298B4D261A8CCB5FEA14FB91ED412A7603A585A25698B2', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:03:18] [Tox] Erro bootstrap {'ip': '46.101.197.175', 'porta': 33445, 'chave_publica': 'CD133B521159541FB1D326DE9850F5E56A6C724B5B5E5F7BAEA6EDD6C8F8C3D', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:03:18] [Tox] Erro bootstrap {'ip': '144.217.167.73', 'porta': 33445, 'chave_publica': '7E5668E0EE09E19F320AD47902419331FFEE147BB3606769CFBE921A7373C6D', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:03:18] [Tox] Erro bootstrap {'ip': '198.98.51.198', 'porta': 33445, 'chave_publica': '1D5A5F2F5D6233058BF0259B09622FB40B482E4FA0931F1D0724D5C9537A5A4', 'origem': 'padrao'}: non-hexadecimal number found in fromhex() arg at position 63
+[2026-10-21T00:03:28] [Tox] Status da rede: Conectado(UDP)
+[2026-10-21T00:03:55] [Tox] Servidor (amigo 0): conectado(TCP)
+[2026-10-21T06:21:34] [Tox] Identidade cliente pronta. ID: 6D5CB6DC87B49E1AF31A607A8BE4B007A3D077A442B885A823F40B725F742A10000336111239
+[2026-10-21T06:21:34] Cliente de acesso remoto via Tox iniciado.
+[2026-10-21T06:21:44] [Tox] Rede: Conectado(UDP)
+[2026-10-21T06:21:51] [Tox] Servidor (amigo 0): conectado(UDP)
+[2026-10-21T06:28:26] [Tox] Identidade cliente pronta. ID: 6D5CB6DC87B49E1AF31A607A8BE4B007A3D077A442B885A823F40B725F742A10000336111239
+[2026-10-21T06:28:26] Cliente de acesso remoto via Tox iniciado.
+[2026-10-21T06:28:36] [Tox] Rede: Conectado(UDP)
+[2026-10-21T06:28:50] [Tox] Servidor (amigo 0): conectado(TCP)
+[2026-10-21T06:31:12] [Tox] Servidor (amigo 0): conectado(UDP)
+[2026-10-21T06:31:20] [Tox] Servidor (amigo 0): conectado(TCP)
+[2026-10-21T06:31:23] [Tox] Servidor (amigo 0): conectado(UDP)
+[2026-10-21T06:54:56] [Tox] Identidade cliente pronta. ID: 6D5CB6DC87B49E1AF31A607A8BE4B007A3D077A442B885A823F40B725F742A10000336111239
+[2026-10-21T06:54:56] Cliente de acesso remoto via Tox iniciado.
+[2026-10-21T06:55:10] [Tox] Rede: Conectado(UDP)
+[2026-10-21T06:55:15] [Tox] Servidor (amigo 0): conectado(UDP)
+[2026-10-21T12:05:31] [Tox] Servidor (amigo 0): conectado(TCP)
+[2026-10-21T12:07:16] [Tox] Servidor (amigo 0): conectado(UDP)
+[2026-10-21T14:38:01] [Tox] Rede: Offline
+[2026-10-21T14:38:21] [Tox] Rede: Conectado(UDP)
+[2026-10-21T14:38:46] [Tox] Servidor (amigo 0): desconectado
+[2026-10-21T14:39:23] [Tox] Servidor (amigo 0): conectado(TCP)
+[2026-10-21T16:17:21] [Tox] Servidor (amigo 0): conectado(UDP)

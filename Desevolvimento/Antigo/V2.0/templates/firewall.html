@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS - Firewall UFW</title>
+<style>
+  :root {
+    --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;
+    --border:#2a2a3a;--accent:#4f8ef7;--accent2:#7c3aed;
+    --text:#e2e8f0;--text2:#94a3b8;--danger:#ef4444;
+    --success:#22c55e;--warning:#f59e0b;--nav-w:240px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    display:flex;min-height:100vh;}
+  /* sidebar igual dashboard */
+  .sidebar{width:var(--nav-w);background:var(--bg2);
+    border-right:1px solid var(--border);display:flex;
+    flex-direction:column;position:fixed;top:0;left:0;
+    height:100vh;z-index:100;}
+  .sidebar-logo{padding:1.5rem 1.25rem;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:0.75rem;}
+  .sidebar-logo .icon{width:40px;height:40px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:10px;display:flex;align-items:center;
+    justify-content:center;font-size:1.2rem;flex-shrink:0;}
+  .sidebar-logo .title{font-size:0.9rem;font-weight:700;}
+  .sidebar-logo .sub{font-size:0.7rem;color:var(--text2);}
+  nav{flex:1;padding:1rem 0;overflow-y:auto;}
+  .nav-section{font-size:0.68rem;font-weight:700;color:var(--text2);
+    letter-spacing:0.08em;text-transform:uppercase;
+    padding:0.75rem 1.25rem 0.4rem;}
+  .nav-item{display:flex;align-items:center;gap:0.75rem;
+    padding:0.65rem 1.25rem;color:var(--text2);text-decoration:none;
+    font-size:0.9rem;border-left:3px solid transparent;
+    transition:background 0.15s,color 0.15s;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:var(--bg3);color:var(--accent);
+    border-left-color:var(--accent);}
+  .nav-item .nav-icon{font-size:1.05rem;width:20px;text-align:center;}
+  .sidebar-bottom{padding:1rem 1.25rem;border-top:1px solid var(--border);}
+  .btn-logout{width:100%;background:#2a0a0a;border:1px solid #5a1a1a;
+    border-radius:8px;padding:0.6rem;color:#f87171;font-size:0.85rem;
+    cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:0.5rem;text-decoration:none;}
+  .btn-logout:hover{background:#3a0a0a;}
+  /* main */
+  .main{margin-left:var(--nav-w);flex:1;display:flex;
+    flex-direction:column;min-height:100vh;}
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);
+    padding:1rem 1.75rem;display:flex;align-items:center;
+    justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-title{font-size:1.15rem;font-weight:600;}
+  .topbar-right{display:flex;align-items:center;gap:0.75rem;}
+  .content{padding:1.75rem;flex:1;}
+  /* cards */
+  .card{background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;margin-bottom:1.5rem;}
+  .card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;}
+  .card-title{font-size:0.95rem;font-weight:600;
+    display:flex;align-items:center;gap:0.5rem;}
+  .card-body{padding:1.25rem;}
+  /* status bar */
+  .status-bar{display:flex;align-items:center;gap:1.5rem;
+    padding:0.875rem 1.25rem;background:var(--bg3);
+    border-bottom:1px solid var(--border);flex-wrap:wrap;gap:0.75rem;}
+  .status-item{display:flex;align-items:center;gap:0.4rem;
+    font-size:0.82rem;}
+  .status-item strong{color:var(--text);}
+  .dot{display:inline-block;width:8px;height:8px;
+    border-radius:50%;margin-right:0.25rem;}
+  .dot-g{background:var(--success);box-shadow:0 0 6px var(--success);}
+  .dot-r{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+  .dot-y{background:var(--warning);box-shadow:0 0 6px var(--warning);}
+  /* timer banner */
+  .timer-banner{display:none;background:#2a1a00;
+    border:1px solid #5a3a00;border-radius:10px;
+    padding:1rem 1.25rem;margin-bottom:1.5rem;
+    display:none;align-items:center;justify-content:space-between;
+    gap:1rem;flex-wrap:wrap;}
+  .timer-banner.show{display:flex;}
+  .timer-text{font-size:0.9rem;color:var(--warning);}
+  .timer-count{font-size:1.5rem;font-weight:700;
+    color:var(--warning);font-family:monospace;}
+  /* form */
+  .form-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+  .form-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+  .form-group{display:flex;flex-direction:column;gap:0.4rem;}
+  .form-group label{font-size:0.78rem;color:var(--text2);
+    font-weight:500;text-transform:uppercase;letter-spacing:0.04em;}
+  .form-group input,
+  .form-group select{background:var(--bg3);border:1px solid var(--border);
+    border-radius:8px;padding:0.65rem 0.875rem;color:var(--text);
+    font-size:0.9rem;outline:none;
+    transition:border-color 0.2s;}
+  .form-group input:focus,
+  .form-group select:focus{border-color:var(--accent);}
+  .form-group select option{background:var(--bg3);}
+  .form-hint{font-size:0.72rem;color:var(--text2);}
+  /* btn */
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;
+    padding:0.5rem 1rem;border-radius:8px;font-size:0.85rem;
+    font-weight:500;cursor:pointer;border:none;
+    transition:opacity 0.2s,transform 0.1s;text-decoration:none;}
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-success{background:#16a34a;color:white;}
+  .btn-danger{background:var(--danger);color:white;}
+  .btn-warning{background:var(--warning);color:#000;}
+  .btn-ghost{background:var(--bg3);color:var(--text2);
+    border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);}
+  .btn-sm{padding:0.35rem 0.7rem;font-size:0.78rem;}
+  /* badge */
+  .badge{padding:0.2rem 0.5rem;border-radius:20px;
+    font-size:0.7rem;font-weight:600;}
+  .badge-green{background:#052a1a;color:var(--success);border:1px solid #1a5c3a;}
+  .badge-red{background:#2a0a0a;color:var(--danger);border:1px solid #5a1a1a;}
+  .badge-yellow{background:#2a1a00;color:var(--warning);border:1px solid #5a3a00;}
+  .badge-blue{background:#0a1a2a;color:var(--accent);border:1px solid #1a3a5a;}
+  .badge-gray{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+  .badge-purple{background:#1a0a2a;color:#a78bfa;border:1px solid #4c1d95;}
+  /* table */
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+  th{background:var(--bg3);color:var(--text2);font-size:0.7rem;
+    font-weight:600;text-transform:uppercase;letter-spacing:0.05em;
+    padding:0.75rem 1rem;text-align:left;white-space:nowrap;}
+  td{padding:0.7rem 1rem;border-bottom:1px solid var(--border);
+    color:var(--text);}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:var(--bg3);}
+  /* toast */
+  #toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;
+    display:flex;flex-direction:column;gap:0.5rem;z-index:9999;}
+  .toast{background:var(--bg2);border:1px solid var(--border);
+    border-radius:10px;padding:0.875rem 1.25rem;font-size:0.85rem;
+    min-width:280px;max-width:380px;display:flex;
+    align-items:center;gap:0.75rem;box-shadow:0 8px 32px #00000066;
+    animation:slideIn 0.3s ease;}
+  @keyframes slideIn{
+    from{transform:translateX(120%);opacity:0;}
+    to{transform:translateX(0);opacity:1;}}
+  .toast.success{border-color:#1a5c3a;}
+  .toast.error{border-color:#5a1a1a;}
+  /* modal */
+  .modal-overlay{display:none;position:fixed;inset:0;
+    background:#00000088;z-index:500;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--bg2);border:1px solid var(--border);
+    border-radius:14px;padding:1.5rem;width:100%;max-width:520px;
+    max-height:90vh;overflow-y:auto;
+    box-shadow:0 20px 60px #00000099;}
+  .modal-title{font-size:1rem;font-weight:600;margin-bottom:1.25rem;
+    display:flex;align-items:center;gap:0.5rem;}
+  .modal-footer{display:flex;gap:0.75rem;justify-content:flex-end;
+    margin-top:1.25rem;padding-top:1rem;
+    border-top:1px solid var(--border);}
+  /* separador */
+  .section-sep{height:1px;background:var(--border);margin:1rem 0;}
+  /* regra locked */
+  .locked-row td{opacity:0.7;}
+  .locked-note{font-size:0.72rem;color:var(--text2);}
+  @media(max-width:768px){
+    .sidebar{display:none;}.main{margin-left:0;}
+    .form-grid{grid-template-columns:1fr;}
+    .form-grid-2{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">🛡️</div>
+    <div><div class="title">RRFS</div><div class="sub">Segurança de Rede</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a class="nav-item" href="/dashboard"><span class="nav-icon">📊</span>Dashboard</a>
+    <div class="nav-section">Segurança</div>
+    <a class="nav-item active" href="/firewall"><span class="nav-icon">🔥</span>Firewall UFW</a>
+    <a class="nav-item" href="/tor"><span class="nav-icon">🧅</span>Tor Hidden Services</a>
+    <div class="nav-section">Rede</div>
+    <a class="nav-item" href="/conexao"><span class="nav-icon">🌐</span>Conexão</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="/logout" class="btn-logout">🚪 Sair</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">🔥 Firewall UFW</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="carregarStatus()">🔄 Atualizar</button>
+      <button class="btn btn-primary" onclick="abrirModalAdicionar()">+ Nova Regra</button>
+    </div>
+  </div>
+
+  <!-- timer mudança interface -->
+  <div class="timer-banner" id="timerBanner">
+    <div>
+      <div class="timer-text">
+        ⚠️ Interface alterada para <strong id="timerIface">--</strong>.
+        Confirme para salvar ou aguarde reverter automaticamente.
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:1rem;">
+      <div class="timer-count" id="timerCount">5:00</div>
+      <button class="btn btn-warning" onclick="confirmarInterface()">✅ Confirmar</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- status bar -->
+    <div class="card">
+      <div class="status-bar" id="statusBar">
+        <div class="status-item">
+          <span class="dot dot-y"></span>
+          <span>Carregando...</span>
+        </div>
+      </div>
+      <!-- config interface sistema -->
+      <div class="card-body" style="padding:0.875rem 1.25rem;
+           border-top:1px solid var(--border);
+           display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+        <span style="font-size:0.85rem;color:var(--text2);">
+          🖥️ Interface do sistema (porta 2000):
+        </span>
+        <select id="selectInterface" style="background:var(--bg3);
+          border:1px solid var(--border);border-radius:8px;
+          padding:0.4rem 0.75rem;color:var(--text);font-size:0.85rem;
+          outline:none;">
+          <option value="">Todas as interfaces</option>
+        </select>
+        <button class="btn btn-primary btn-sm"
+          onclick="alterarInterface()">
+          💾 Aplicar
+        </button>
+        <span style="font-size:0.75rem;color:var(--text2);">
+          ⚠️ Terá 5 min para confirmar
+        </span>
+      </div>
+    </div>
+
+    <!-- regras -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📋 Regras Ativas</div>
+        <div style="display:flex;gap:0.5rem;align-items:center;">
+          <span class="badge badge-gray" id="total-regras">0 regras</span>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Categoria</th>
+              <th>Direção</th>
+              <th>Interface</th>
+              <th>Protocolo</th>
+              <th>IP</th>
+              <th>Porta</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tblRegras">
+            <tr><td colspan="9" style="text-align:center;color:var(--text2);padding:2rem;">
+              Carregando...
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Adicionar/Editar Regra -->
+<div class="modal-overlay" id="modalRegra">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modalTitulo">➕ Nova Regra de Firewall</span>
+    </div>
+    <input type="hidden" id="editId">
+
+    <div style="display:flex;flex-direction:column;gap:1rem;">
+      <div class="form-group">
+        <label>Nome da Regra</label>
+        <input type="text" id="rNome"
+          placeholder="Ex: Liberar HTTP">
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Direção</label>
+          <select id="rDirecao">
+            <option value="in">Entrada</option>
+            <option value="out">Saída</option>
+            <option value="ambos">Ambos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Protocolo</label>
+          <select id="rProtocolo">
+            <option value="tcp">TCP</option>
+            <option value="udp">UDP</option>
+            <option value="ambos">Ambos</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Interface</label>
+          <select id="rInterface">
+            <option value="">Todas</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>IP ou Rede (opcional)</label>
+          <input type="text" id="rIP"
+            placeholder="Ex: 192.168.1.0/24">
+          <span class="form-hint">Deixe vazio para qualquer IP</span>
+        </div>
+        <div class="form-group">
+          <label>Porta (opcional)</label>
+          <input type="text" id="rPorta"
+            placeholder="Ex: 80 ou 8000:9000">
+          <span class="form-hint">Deixe vazio para qualquer porta</span>
+        </div>
+      </div>
+
+      <div style="background:var(--bg3);border-radius:8px;
+           padding:0.75rem;font-size:0.8rem;color:var(--text2);">
+        ℹ️ Informe pelo menos uma <strong>Porta</strong>
+        ou um <strong>IP</strong>.
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarRegra()">
+        💾 Salvar Regra
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+let statusAtual = {};
+let timerInterval = null;
+
+// ── toast ─────────────────────────────────────────────────
+function toast(msg, tipo='info') {
+  const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el = document.createElement('div');
+  el.className = `toast ${tipo}`;
+  el.innerHTML = `<span>${icons[tipo]||'ℹ️'}</span><span>${msg}</span>`;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>el.remove(), 4500);
+}
+
+// ── carregar status ───────────────────────────────────────
+async function carregarStatus() {
+  try {
+    const r = await fetch('/api/firewall/status');
+    const d = await r.json();
+    if (!d.sucesso) return;
+
+    statusAtual = d;
+    renderizarStatus(d.status);
+    renderizarRegras(d.regras || []);
+    popularInterfaces(d.interfaces || []);
+    verificarMudancaPendente();
+  } catch(e) {
+    console.error('Erro carregar status:', e);
+  }
+}
+
+function renderizarStatus(s) {
+  if (!s) return;
+  const bar = document.getElementById('statusBar');
+  const ativo = s.ativo;
+  bar.innerHTML = `
+    <div class="status-item">
+      <span class="dot ${ativo?'dot-g':'dot-r'}"></span>
+      <strong>${ativo?'UFW Ativo':'UFW Inativo'}</strong>
+    </div>
+    <div class="status-item">
+      📥 Entrada: <strong>${s.politica_entrada||'--'}</strong>
+    </div>
+    <div class="status-item">
+      📤 Saída: <strong>${s.politica_saida||'--'}</strong>
+    </div>
+  `;
+}
+
+function renderizarRegras(regras) {
+  const tbody = document.getElementById('tblRegras');
+  document.getElementById('total-regras').textContent =
+    regras.length + ' regras';
+
+  if (!regras.length) {
+    tbody.innerHTML = `<tr><td colspan="9"
+      style="text-align:center;color:var(--text2);padding:2rem;">
+      Nenhuma regra cadastrada
+    </td></tr>`;
+    return;
+  }
+
+  const catBadge = {
+    usuario: '<span class="badge badge-blue">Usuário</span>',
+    sistema: '<span class="badge badge-green">Sistema</span>',
+    tor:     '<span class="badge badge-purple">Tor</span>',
+    vpn:     '<span class="badge badge-yellow">VPN</span>',
+  };
+
+  const dirBadge = {
+    in:    '<span class="badge badge-blue">↓ Entrada</span>',
+    out:   '<span class="badge badge-yellow">↑ Saída</span>',
+    ambos: '<span class="badge badge-gray">↕ Ambos</span>',
+  };
+
+  tbody.innerHTML = regras.map(r => {
+    const editavel  = r.editavel !== false;
+    const pausada   = r.pausada;
+    const cat       = r.categoria || 'usuario';
+    const btnAcoes  = editavel ? `
+      ${pausada
+        ? `<button class="btn btn-success btn-sm"
+            onclick="reativarRegra('${r.id}')">▶ Reativar</button>`
+        : `<button class="btn btn-warning btn-sm"
+            onclick="pausarRegra('${r.id}')">⏸ Pausar</button>`
+      }
+      <button class="btn btn-ghost btn-sm"
+        onclick="abrirModalEditar(${JSON.stringify(r).replace(/"/g,'&quot;')})">
+        ✏️
+      </button>
+      <button class="btn btn-danger btn-sm"
+        onclick="removerRegra('${r.id}')">🗑️</button>
+    ` : `<span class="locked-note">🔒 automática</span>`;
+
+    return `<tr class="${pausada?'opacity:0.6':''} ${!editavel?'locked-row':''}">
+      <td>
+        <div style="font-weight:500">${r.nome||'—'}</div>
+        ${pausada?'<div><span class="badge badge-yellow">Pausada</span></div>':''}
+      </td>
+      <td>${catBadge[cat]||cat}</td>
+      <td>${dirBadge[r.direcao]||r.direcao||'—'}</td>
+      <td><code style="font-size:0.8rem">${r.interface||'todas'}</code></td>
+      <td><code style="font-size:0.8rem">${r.protocolo||'—'}</code></td>
+      <td><code style="font-size:0.8rem">${r.ip||'—'}</code></td>
+      <td><code style="font-size:0.8rem">${r.porta||'—'}</code></td>
+      <td>${pausada
+        ? '<span class="badge badge-yellow">Pausada</span>'
+        : '<span class="badge badge-green">Ativa</span>'}</td>
+      <td>
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;">
+          ${btnAcoes}
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function popularInterfaces(interfaces) {
+  const sels = ['rInterface', 'selectInterface'];
+  sels.forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    const val = sel.value;
+    // preservar opção vazia
+    const primeira = sel.options[0];
+    sel.innerHTML = '';
+    sel.appendChild(primeira);
+    interfaces.forEach(i => {
+      const op = document.createElement('option');
+      op.value = i.nome;
+      op.textContent = `${i.nome} (${i.tipo}) ${i.ip?'- '+i.ip:''}`;
+      sel.appendChild(op);
+    });
+    sel.value = val;
+  });
+}
+
+// ── modal ─────────────────────────────────────────────────
+function abrirModalAdicionar() {
+  document.getElementById('modalTitulo').textContent = '➕ Nova Regra';
+  document.getElementById('editId').value = '';
+  ['rNome','rIP','rPorta'].forEach(id =>
+    document.getElementById(id).value = '');
+  document.getElementById('rDirecao').value = 'in';
+  document.getElementById('rProtocolo').value = 'tcp';
+  document.getElementById('rInterface').value = '';
+  document.getElementById('modalRegra').classList.add('show');
+}
+
+function abrirModalEditar(r) {
+  document.getElementById('modalTitulo').textContent = '✏️ Editar Regra';
+  document.getElementById('editId').value = r.id;
+  document.getElementById('rNome').value = r.nome || '';
+  document.getElementById('rDirecao').value = r.direcao || 'in';
+  document.getElementById('rProtocolo').value = r.protocolo || 'tcp';
+  document.getElementById('rInterface').value = r.interface || '';
+  document.getElementById('rIP').value = r.ip || '';
+  document.getElementById('rPorta').value = r.porta || '';
+  document.getElementById('modalRegra').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('modalRegra').classList.remove('show');
+}
+
+async function salvarRegra() {
+  const id    = document.getElementById('editId').value;
+  const dados = {
+    id:        id,
+    nome:      document.getElementById('rNome').value.trim(),
+    direcao:   document.getElementById('rDirecao').value,
+    protocolo: document.getElementById('rProtocolo').value,
+    interface: document.getElementById('rInterface').value,
+    ip:        document.getElementById('rIP').value.trim(),
+    porta:     document.getElementById('rPorta').value.trim(),
+  };
+
+  const url = id ? '/api/firewall/editar' : '/api/firewall/adicionar';
+  try {
+    const r = await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(dados)
+    });
+    const d = await r.json();
+    if (d.sucesso) {
+      toast('Regra salva com sucesso!', 'success');
+      fecharModal();
+      carregarStatus();
+    } else {
+      toast(d.erro || 'Erro ao salvar', 'error');
+    }
+  } catch(e) {
+    toast('Erro de comunicação', 'error');
+  }
+}
+
+// ── ações de regra ────────────────────────────────────────
+async function pausarRegra(id) {
+  const r = await fetch('/api/firewall/pausar', {
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({indice:id})
+  });
+  const d = await r.json();
+  toast(d.sucesso ? 'Regra pausada' : d.erro, d.sucesso?'warning':'error');
+  if(d.sucesso) carregarStatus();
+}
+
+async function reativarRegra(id) {
+  const r = await fetch('/api/firewall/reativar', {
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({indice:id})
+  });
+  const d = await r.json();
+  toast(d.sucesso ? 'Regra reativada' : d.erro, d.sucesso?'success':'error');
+  if(d.sucesso) carregarStatus();
+}
+
+async function removerRegra(id) {
+  if(!confirm('Remover esta regra?')) return;
+  const r = await fetch('/api/firewall/remover', {
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({indice:id})
+  });
+  const d = await r.json();
+  toast(d.sucesso ? 'Regra removida' : d.erro, d.sucesso?'success':'error');
+  if(d.sucesso) carregarStatus();
+}
+
+// ── interface sistema ─────────────────────────────────────
+async function alterarInterface() {
+  const iface = document.getElementById('selectInterface').value;
+  const r = await fetch('/api/firewall/config_interface', {
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({interface:iface})
+  });
+  const d = await r.json();
+  if(d.sucesso) {
+    toast(d.mensagem, 'warning');
+    iniciarTimerConfirmacao(d.tempo||300, iface);
+  } else {
+    toast(d.erro||'Erro', 'error');
+  }
+}
+
+async function confirmarInterface() {
+  const r = await fetch('/api/firewall/confirmar_interface', {
+    method:'POST'
+  });
+  const d = await r.json();
+  if(d.sucesso) {
+    toast('Interface confirmada!', 'success');
+    pararTimer();
+    carregarStatus();
+  } else {
+    toast(d.erro||'Erro', 'error');
+  }
+}
+
+async function verificarMudancaPendente() {
+  try {
+    const r = await fetch('/api/firewall/status_mudanca_interface');
+    const d = await r.json();
+    if(d.pendente && d.restante > 0) {
+      document.getElementById('timerIface').textContent =
+        d.interface_pendente || 'todas';
+      iniciarTimerConfirmacao(d.restante, d.interface_pendente);
+    } else {
+      pararTimer();
+    }
+  } catch(e) {}
+}
+
+function iniciarTimerConfirmacao(segundos, iface) {
+  pararTimer();
+  const banner = document.getElementById('timerBanner');
+  banner.classList.add('show');
+  document.getElementById('timerIface').textContent =
+    iface || 'todas as interfaces';
+
+  let restante = segundos;
+  function atualizar() {
+    const m = Math.floor(restante/60);
+    const s = restante % 60;
+    document.getElementById('timerCount').textContent =
+      `${m}:${s.toString().padStart(2,'0')}`;
+    if(restante <= 0) {
+      pararTimer();
+      toast('Tempo esgotado! Interface revertida.', 'warning');
+      carregarStatus();
+    }
+    restante--;
+  }
+  atualizar();
+  timerInterval = setInterval(atualizar, 1000);
+}
+
+function pararTimer() {
+  if(timerInterval) { clearInterval(timerInterval); timerInterval=null; }
+  document.getElementById('timerBanner').classList.remove('show');
+}
+
+// fechar modal clicando fora
+document.getElementById('modalRegra').addEventListener('click', function(e) {
+  if(e.target === this) fecharModal();
+});
+
+// init
+carregarStatus();
+setInterval(carregarStatus, 15000);
+</script>
+</body>
+</html>

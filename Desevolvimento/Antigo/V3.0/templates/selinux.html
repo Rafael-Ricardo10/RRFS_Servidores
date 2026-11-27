@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS - AppArmor</title>
+<style>
+  :root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;
+    --border:#2a2a3a;--accent:#4f8ef7;--accent2:#7c3aed;
+    --text:#e2e8f0;--text2:#94a3b8;--danger:#ef4444;
+    --success:#22c55e;--warning:#f59e0b;--nav-w:240px;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    display:flex;min-height:100vh;}
+  .sidebar{width:var(--nav-w);background:var(--bg2);
+    border-right:1px solid var(--border);display:flex;
+    flex-direction:column;position:fixed;top:0;left:0;
+    height:100vh;z-index:100;overflow-y:auto;}
+  .sidebar-logo{padding:1.25rem;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:0.75rem;}
+  .sidebar-logo .icon{width:40px;height:40px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:10px;display:flex;align-items:center;
+    justify-content:center;font-size:1.2rem;}
+  .sidebar-logo .title{font-size:0.9rem;font-weight:700;}
+  .sidebar-logo .sub{font-size:0.7rem;color:var(--text2);}
+  nav{flex:1;padding:0.75rem 0;}
+  .nav-section{font-size:0.65rem;font-weight:700;color:var(--text2);
+    letter-spacing:0.08em;text-transform:uppercase;
+    padding:0.65rem 1.25rem 0.3rem;}
+  .nav-item{display:flex;align-items:center;gap:0.65rem;
+    padding:0.6rem 1.25rem;color:var(--text2);text-decoration:none;
+    font-size:0.875rem;border-left:3px solid transparent;
+    transition:background 0.15s,color 0.15s;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:var(--bg3);color:var(--accent);
+    border-left-color:var(--accent);}
+  .nav-item .ni{font-size:1rem;width:18px;text-align:center;}
+  .sidebar-bottom{padding:1rem 1.25rem;
+    border-top:1px solid var(--border);}
+  .btn-logout{width:100%;background:#2a0a0a;
+    border:1px solid #5a1a1a;border-radius:8px;padding:0.6rem;
+    color:#f87171;font-size:0.85rem;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;gap:0.5rem;
+    text-decoration:none;}
+  .btn-logout:hover{background:#3a0a0a;}
+  .main{margin-left:var(--nav-w);flex:1;display:flex;
+    flex-direction:column;}
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);
+    padding:0.875rem 1.75rem;display:flex;align-items:center;
+    justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-title{font-size:1.1rem;font-weight:600;}
+  .topbar-right{display:flex;align-items:center;gap:0.75rem;}
+  .content{padding:1.5rem;flex:1;}
+  .card{background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;margin-bottom:1.25rem;}
+  .card-header{padding:0.875rem 1.25rem;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;
+    justify-content:space-between;flex-wrap:wrap;gap:0.5rem;}
+  .card-title{font-size:0.9rem;font-weight:600;
+    display:flex;align-items:center;gap:0.5rem;}
+  .card-body{padding:1.25rem;}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);
+    gap:1rem;margin-bottom:1.25rem;}
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;
+    padding:0.45rem 0.9rem;border-radius:8px;font-size:0.82rem;
+    font-weight:500;cursor:pointer;border:none;
+    transition:opacity 0.2s,transform 0.1s;text-decoration:none;}
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-success{background:#16a34a;color:white;}
+  .btn-danger{background:var(--danger);color:white;}
+  .btn-warning{background:var(--warning);color:#000;}
+  .btn-ghost{background:var(--bg3);color:var(--text2);
+    border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);}
+  .btn-sm{padding:0.3rem 0.65rem;font-size:0.75rem;}
+  .badge{padding:0.2rem 0.5rem;border-radius:20px;
+    font-size:0.7rem;font-weight:600;}
+  .badge-g{background:#052a1a;color:var(--success);border:1px solid #1a5c3a;}
+  .badge-r{background:#2a0a0a;color:var(--danger);border:1px solid #5a1a1a;}
+  .badge-y{background:#2a1a00;color:var(--warning);border:1px solid #5a3a00;}
+  .badge-gray{background:var(--bg3);color:var(--text2);
+    border:1px solid var(--border);}
+  .badge-b{background:#0a1a2a;color:var(--accent);
+    border:1px solid #1a3a5a;}
+  .dot{display:inline-block;width:8px;height:8px;
+    border-radius:50%;margin-right:0.35rem;}
+  .dot-g{background:var(--success);box-shadow:0 0 6px var(--success);}
+  .dot-r{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+  .dot-y{background:var(--warning);box-shadow:0 0 6px var(--warning);}
+  /* ctrl bar */
+  .ctrl-bar{display:flex;align-items:center;gap:0.75rem;
+    padding:0.875rem 1.25rem;background:var(--bg3);
+    border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  /* perfis */
+  .perfil-item{display:flex;align-items:center;
+    justify-content:space-between;gap:0.75rem;
+    padding:0.5rem 0.75rem;border-radius:8px;
+    border-bottom:1px solid var(--border);font-size:0.82rem;}
+  .perfil-item:last-child{border-bottom:none;}
+  .perfil-item:hover{background:var(--bg3);}
+  .perfil-nome{font-family:monospace;font-size:0.78rem;
+    color:var(--text);flex:1;word-break:break-all;}
+  .perfil-acoes{display:flex;gap:0.3rem;flex-shrink:0;}
+  /* stats box */
+  .stats-box{display:grid;grid-template-columns:repeat(3,1fr);
+    gap:0.65rem;margin-bottom:1rem;}
+  .sbox{background:var(--bg3);border-radius:8px;
+    padding:0.875rem;text-align:center;}
+  .sbox .sv{font-size:1.3rem;font-weight:700;margin-bottom:0.2rem;}
+  .sbox .sl{font-size:0.68rem;color:var(--text2);
+    text-transform:uppercase;letter-spacing:0.04em;}
+  /* spin */
+  .spin{width:16px;height:16px;border:2px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;
+    animation:spin 0.8s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  #tw{position:fixed;bottom:1.5rem;right:1.5rem;
+    display:flex;flex-direction:column;gap:0.5rem;z-index:9999;}
+  .toast{background:var(--bg2);border:1px solid var(--border);
+    border-radius:10px;padding:0.75rem 1rem;font-size:0.82rem;
+    min-width:260px;max-width:360px;display:flex;
+    align-items:center;gap:0.65rem;
+    box-shadow:0 8px 32px #00000066;animation:si 0.3s ease;}
+  @keyframes si{
+    from{transform:translateX(110%);opacity:0;}
+    to{transform:translateX(0);opacity:1;}}
+  .toast.success{border-color:#1a5c3a;}
+  .toast.error{border-color:#5a1a1a;}
+  .toast.warning{border-color:#5a3a00;}
+  .table-wrap{max-height:400px;overflow-y:auto;}
+  @media(max-width:768px){
+    .sidebar{display:none;}.main{margin-left:0;}
+    .grid-2{grid-template-columns:1fr;}
+    .stats-box{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">🛡️</div>
+    <div><div class="title">RRFS Servidores</div>
+    <div class="sub">v2.0</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a class="nav-item" href="/dashboard"><span class="ni">📊</span>Dashboard</a>
+    <div class="nav-section">Firewall & Rede</div>
+    <a class="nav-item" href="/firewall"><span class="ni">🔥</span>Firewall UFW</a>
+    <a class="nav-item" href="/tor"><span class="ni">🧅</span>Tor Hidden Services</a>
+    <a class="nav-item" href="/conexao"><span class="ni">🌐</span>Conexão Segura</a>
+    <div class="nav-section">Proteção</div>
+    <a class="nav-item" href="/dns"><span class="ni">🔍</span>DNS Seguro</a>
+    <a class="nav-item" href="/antivirus"><span class="ni">🦠</span>Antivírus</a>
+    <a class="nav-item active" href="/selinux"><span class="ni">🔒</span>AppArmor</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="/logout" class="btn-logout">🚪 Sair</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">🔒 AppArmor (Segurança Mandatória)</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="carregarStatus()">
+        🔄 Atualizar
+      </button>
+    </div>
+  </div>
+
+  <div class="ctrl-bar">
+    <div id="aaCtrl" style="font-size:0.875rem;font-weight:600;
+      display:flex;align-items:center;gap:0.4rem;">
+      <span class="spin"></span> Verificando...
+    </div>
+    <button class="btn btn-success" id="btnAtivar"
+      onclick="ativarAA()" style="display:none">
+      ▶ Ativar AppArmor
+    </button>
+    <button class="btn btn-danger" id="btnDesativar"
+      onclick="desativarAA()" style="display:none">
+      ⏹ Desativar AppArmor
+    </button>
+    <span style="margin-left:auto;font-size:0.75rem;
+      color:var(--text2);">
+      🔒 Sistema padrão Debian · Modo Enforce
+    </span>
+  </div>
+
+  <div class="content">
+
+    <!-- aviso reinicialização -->
+    <div id="avisoReboot" style="display:none;
+      background:#2a1a00;border:1px solid #5a3a00;
+      border-radius:10px;padding:1rem;margin-bottom:1.25rem;
+      font-size:0.85rem;color:var(--warning);
+      display:flex;align-items:center;gap:0.75rem;">
+      ⚠️ <strong>Reinicie o servidor</strong> para que as
+      alterações do AppArmor entrem em vigor completamente.
+    </div>
+
+    <!-- stats -->
+    <div class="stats-box">
+      <div class="sbox">
+        <div class="sv" id="aa-enforce" style="color:var(--success)">
+          --
+        </div>
+        <div class="sl">Perfis Enforce</div>
+      </div>
+      <div class="sbox">
+        <div class="sv" id="aa-complain" style="color:var(--warning)">
+          --
+        </div>
+        <div class="sl">Perfis Complain</div>
+      </div>
+      <div class="sbox">
+        <div class="sv" id="aa-procs" style="color:var(--accent)">
+          --
+        </div>
+        <div class="sl">Processos Protegidos</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- info -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">ℹ️ Informações</div>
+          <span id="aa-badge" class="badge badge-gray">--</span>
+        </div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;
+            gap:0.5rem;font-size:0.82rem;margin-bottom:1rem;">
+            <div style="display:flex;justify-content:space-between;
+              padding:0.4rem;background:var(--bg3);border-radius:6px;">
+              <span>Motor de Segurança</span>
+              <strong id="aa-motor" style="color:var(--accent)">
+                --
+              </strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;
+              padding:0.4rem;background:var(--bg3);border-radius:6px;">
+              <span>Status</span>
+              <span id="aa-status-txt">--</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;
+              padding:0.4rem;background:var(--bg3);border-radius:6px;">
+              <span>Modo Atual</span>
+              <span id="aa-modo">--</span>
+            </div>
+          </div>
+          <div style="background:var(--bg3);border-radius:8px;
+            padding:0.875rem;font-size:0.8rem;color:var(--text2);">
+            <strong style="color:var(--text)">
+              Por que AppArmor no Debian?
+            </strong><br><br>
+            O AppArmor é o sistema de controle de acesso
+            mandatório (MAC) <strong>nativo e padrão do Debian</strong>.
+            Ele confina processos e programas, limitando
+            os recursos que podem acessar, mesmo que
+            sejam comprometidos por vírus ou exploits.
+          </div>
+        </div>
+      </div>
+
+      <!-- logs recentes -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📋 Logs Recentes</div>
+          <button class="btn btn-ghost btn-sm"
+            onclick="carregarLogs()">
+            🔄 Atualizar
+          </button>
+        </div>
+        <div class="card-body">
+          <pre id="aaLogs" style="font-size:0.72rem;
+            font-family:monospace;color:var(--text2);
+            max-height:200px;overflow-y:auto;
+            background:var(--bg3);border-radius:8px;
+            padding:0.75rem;white-space:pre-wrap;
+            word-break:break-all;">
+Carregando logs...
+          </pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- perfis -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          📋 Perfis AppArmor
+          <span id="totalPerfis" class="badge badge-gray">--</span>
+        </div>
+        <button class="btn btn-ghost"
+          onclick="carregarPerfis()">
+          🔄 Atualizar
+        </button>
+      </div>
+      <div class="table-wrap">
+        <div id="listaPerfis" style="padding:0.5rem;">
+          <div style="text-align:center;padding:2rem;
+            color:var(--text2)">
+            <span class="spin"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tw"></div>
+
+<script>
+function toast(msg,tipo='info'){
+  const ic={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el=document.createElement('div');
+  el.className=`toast ${tipo}`;
+  el.innerHTML=`<span>${ic[tipo]}</span><span>${msg}</span>`;
+  document.getElementById('tw').appendChild(el);
+  setTimeout(()=>el.remove(),5000);
+}
+
+async function carregarStatus(){
+  try{
+    const r=await fetch('/api/selinux/status');
+    const d=await r.json();
+    if(!d.sucesso)return;
+
+    const inst=d.instalado;
+    const ativo=d.ativo;
+    const motor=d.motor||'apparmor';
+
+    document.getElementById('aaCtrl').innerHTML=
+      `<span class="dot ${ativo?'dot-g':inst?'dot-y':'dot-r'}"></span>
+       <strong>${ativo?'AppArmor Enforce':
+         inst?'AppArmor Instalado (Inativo)':'Não Instalado'}</strong>`;
+
+    document.getElementById('btnAtivar').style.display=
+      ativo?'none':'inline-flex';
+    document.getElementById('btnDesativar').style.display=
+      ativo?'inline-flex':'none';
+
+    // stats
+    document.getElementById('aa-enforce').textContent=
+      d.perfis_enforce||0;
+    document.getElementById('aa-complain').textContent=
+      d.perfis_complain||0;
+    document.getElementById('aa-procs').textContent=
+      d.processos||0;
+
+    // badge
+    const badge=document.getElementById('aa-badge');
+    badge.className='badge '+(ativo?'badge-g':inst?'badge-y':'badge-r');
+    badge.textContent=ativo?'Enforce':inst?'Inativo':'Não instalado';
+
+    document.getElementById('aa-motor').textContent=
+      motor.toUpperCase();
+    document.getElementById('aa-status-txt').innerHTML=
+      `<span class="badge ${ativo?'badge-g':'badge-r'}">
+        ${ativo?'Ativo':'Inativo'}
+      </span>`;
+    document.getElementById('aa-modo').textContent=
+      d.modo||'--';
+
+    // carregar perfis
+    await carregarPerfis();
+    await carregarLogs();
+
+  }catch(e){console.error('Erro aa status:',e);}
+}
+
+async function carregarPerfis(){
+  try{
+    const r=await fetch('/api/selinux/perfis');
+    const d=await r.json();
+    const perfis=d.perfis||[];
+    document.getElementById('totalPerfis').textContent=
+      perfis.length+' perfis';
+
+    const el=document.getElementById('listaPerfis');
+    if(!perfis.length){
+      el.innerHTML=
+        '<p style="text-align:center;color:var(--text2);'+
+        'padding:2rem">Nenhum perfil encontrado</p>';
+      return;
+    }
+
+    const modoBadge={
+      enforce:'<span class="badge badge-g">Enforce</span>',
+      complain:'<span class="badge badge-y">Complain</span>',
+      disabled:'<span class="badge badge-r">Disabled</span>',
+    };
+
+    el.innerHTML=perfis.map(p=>`
+      <div class="perfil-item">
+        <div class="perfil-nome">${p.nome}</div>
+        <div>${modoBadge[p.modo]||
+          '<span class="badge badge-gray">'+p.modo+'</span>'}</div>
+        <div class="perfil-acoes">
+          ${p.modo!=='enforce'?`
+            <button class="btn btn-success btn-sm"
+              onclick="gerenciarPerfil('${p.nome}','enforce')">
+              Enforce
+            </button>`:``}
+          ${p.modo!=='complain'?`
+            <button class="btn btn-warning btn-sm"
+              onclick="gerenciarPerfil('${p.nome}','complain')">
+              Complain
+            </button>`:``}
+          ${p.modo!=='disabled'?`
+            <button class="btn btn-ghost btn-sm"
+              onclick="gerenciarPerfil('${p.nome}','disable')">
+              Disable
+            </button>`:``}
+        </div>
+      </div>
+    `).join('');
+  }catch(e){console.error('Erro perfis:',e);}
+}
+
+async function carregarLogs(){
+  try{
+    const r=await fetch('/api/status_geral');
+    const d=await r.json();
+    // logs do apparmor via dmesg
+    const cmd=await fetch('/api/selinux/status');
+    const sd=await cmd.json();
+    const texto=sd.texto_completo||'Logs não disponíveis';
+    document.getElementById('aaLogs').textContent=
+      texto||'Sem logs recentes';
+  }catch(e){}
+}
+
+async function ativarAA(){
+  const btn=document.getElementById('btnAtivar');
+  btn.disabled=true;
+  btn.textContent='⏳ Ativando...';
+  toast('Instalando/ativando AppArmor...','info');
+  try{
+    const r=await fetch('/api/selinux/ativar',{method:'POST'});
+    const d=await r.json();
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso){
+      document.getElementById('avisoReboot').style.display='flex';
+      await carregarStatus();
+    }
+  }catch(e){toast('Erro','error');}
+  btn.disabled=false;
+  btn.textContent='▶ Ativar AppArmor';
+}
+
+async function desativarAA(){
+  if(!confirm('Desativar AppArmor reduz a segurança do servidor. Continuar?'))
+    return;
+  try{
+    const r=await fetch('/api/selinux/desativar',{method:'POST'});
+    const d=await r.json();
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso){
+      document.getElementById('avisoReboot').style.display='flex';
+      await carregarStatus();
+    }
+  }catch(e){toast('Erro','error');}
+}
+
+async function gerenciarPerfil(perfil,acao){
+  try{
+    const r=await fetch('/api/selinux/gerenciar_perfil',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({perfil,acao})
+    });
+    const d=await r.json();
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso) await carregarPerfis();
+  }catch(e){toast('Erro','error');}
+}
+
+carregarStatus();
+setInterval(carregarStatus,30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS Servidores - Dashboard</title>
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--border:#2a2a3a;--accent:#4f8ef7;--accent2:#7c3aed;--text:#e2e8f0;--text2:#94a3b8;--danger:#ef4444;--success:#22c55e;--warning:#f59e0b;--nav-w:240px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;display:flex;min-height:100vh}
+.sidebar{width:var(--nav-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+.sidebar-logo .icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.sidebar-logo .title{font-size:.9rem;font-weight:700}.sidebar-logo .sub{font-size:.7rem;color:var(--text2)}
+nav{flex:1;padding:.75rem 0}
+.nav-section{font-size:.65rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;padding:.65rem 1.25rem .3rem}
+.nav-item{display:flex;align-items:center;gap:.65rem;padding:.6rem 1.25rem;color:var(--text2);text-decoration:none;font-size:.875rem;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg3);color:var(--accent);border-left-color:var(--accent)}
+.nav-item .ni{width:18px;text-align:center}
+.sidebar-bottom{padding:1rem 1.25rem;border-top:1px solid var(--border)}
+.btn-logout{width:100%;background:#2a0a0a;border:1px solid #5a1a1a;border-radius:8px;padding:.6rem;color:#f87171;font-size:.85rem;display:flex;align-items:center;justify-content:center;gap:.5rem;text-decoration:none}
+.main{margin-left:var(--nav-w);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:.875rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:1.1rem;font-weight:600}.topbar-right{display:flex;align-items:center;gap:.75rem}
+.badge-ssl{background:#052a1a;border:1px solid #1a5c3a;border-radius:6px;padding:.25rem .6rem;font-size:.72rem;color:var(--success)}
+.content{padding:1.5rem;flex:1}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.25rem}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.25rem}
+.stat-card,.modulo-card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:1.1rem}
+.stat-header,.modulo-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+.stat-label{font-size:.72rem;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.stat-value{font-size:1.4rem;font-weight:700}.stat-sub{font-size:.75rem;color:var(--text2);margin-top:.25rem}
+.ip-box{font-family:monospace;font-size:1.15rem;color:var(--accent)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:.35rem}
+.dot-g{background:var(--success);box-shadow:0 0 6px var(--success)}.dot-r{background:var(--danger);box-shadow:0 0 6px var(--danger)}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.card-header{padding:.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:.9rem;font-weight:600}.card-body{padding:1.25rem}
+.info-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:.65rem}
+.info-item{background:var(--bg3);border-radius:8px;padding:.75rem}
+.info-item .lbl{font-size:.68rem;color:var(--text2);text-transform:uppercase;margin-bottom:.25rem}
+.info-item .val{font-size:.875rem;font-weight:600;word-break:break-all}
+.badge{padding:.2rem .5rem;border-radius:20px;font-size:.68rem;font-weight:600}
+.badge-g{background:#052a1a;color:var(--success);border:1px solid #1a5c3a}
+.badge-r{background:#2a0a0a;color:var(--danger);border:1px solid #5a1a1a}
+.badge-y{background:#2a1a00;color:var(--warning);border:1px solid #5a3a00}
+.badge-b{background:#0a1a2a;color:var(--accent);border:1px solid #1a3a5a}
+.badge-gray{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;border-radius:8px;font-size:.82rem;font-weight:500;cursor:pointer;border:none;text-decoration:none}
+.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+.sys-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem}
+.sys-item{background:var(--bg3);border-radius:8px;padding:.875rem;text-align:center}
+.sys-item .sv{font-size:1.05rem;font-weight:700;color:var(--accent);margin-bottom:.2rem}
+.sys-item .sl{font-size:.68rem;color:var(--text2);text-transform:uppercase}
+.modulos-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.25rem}
+.modulo-card{display:flex;flex-direction:column;gap:.5rem}
+.modulo-nome{font-size:.85rem;font-weight:600}.modulo-status{font-size:.75rem;color:var(--text2)}
+.modulo-link{font-size:.75rem;color:var(--accent);text-decoration:none;margin-top:auto}
+.small{font-size:.75rem;color:var(--text2)}
+.prog-bar{height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:.5rem}
+.prog-fill{height:100%;background:var(--accent);transition:width .5s}
+.spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+#tw{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;flex-direction:column;gap:.5rem;z-index:9999}
+.toast{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;font-size:.82rem;min-width:260px;max-width:360px;display:flex;gap:.65rem;box-shadow:0 8px 32px #0006}
+.toast.success{border-color:#1a5c3a}.toast.error{border-color:#5a1a1a}
+.ts{color:var(--text2);font-size:.78rem}
+@media(max-width:1200px){.grid-4,.sys-grid,.modulos-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.grid-4,.grid-2,.modulos-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="icon">🛡️</div>
+    <div><div class="title">RRFS Servidores</div><div class="sub">v2.5 - Segurança de Rede</div></div></div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a class="nav-item active" href="/dashboard"><span class="ni">📊</span>Dashboard</a>
+    <div class="nav-section">Firewall & Acesso Remoto</div>
+    <a class="nav-item" href="/firewall"><span class="ni">🔥</span>Firewall UFW</a>
+    <a class="nav-item" href="/tox"><span class="ni">📡</span>Acesso Remoto Tox</a>
+    <a class="nav-item" href="/tor"><span class="ni">🧅</span>Tor Hidden Services</a>
+    <div class="nav-section">Proteção</div>
+    <a class="nav-item" href="/dns"><span class="ni">🔍</span>DNS Seguro</a>
+    <a class="nav-item" href="/antivirus"><span class="ni">🦠</span>Antivírus</a>
+    <a class="nav-item" href="/selinux"><span class="ni">🔒</span>AppArmor</a>
+    <div class="nav-section">Sistema</div>
+    <a class="nav-item" href="#" onclick="abrirExportImport()"><span class="ni">💾</span>Export / Import</a>
+  </nav>
+  <div class="sidebar-bottom"><a href="/logout" class="btn-logout">🚪 Sair</a></div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">📊 Dashboard - RRFS Servidores v2.5</div>
+    <div class="topbar-right"><span class="badge-ssl">🔒 HTTPS</span><span class="ts" id="clock">--:--:--</span>
+      <button class="btn btn-ghost" onclick="carregarStatus()">🔄 Atualizar</button></div>
+  </div>
+  <div class="content">
+
+    <div class="grid-4">
+      <div class="stat-card"><div class="stat-header"><span class="stat-label">IP Público</span><span>🌍</span></div>
+        <div class="stat-value ip-box" id="s-ip"><span class="spin"></span></div><div class="stat-sub">Visto de fora (cache 2 min)</div></div>
+      <div class="stat-card"><div class="stat-header"><span class="stat-label">Firewall UFW</span><span>🔥</span></div>
+        <div class="stat-value" id="s-ufw"><span class="spin"></span></div><div class="stat-sub" id="s-ufw-sub">--</div></div>
+      <div class="stat-card"><div class="stat-header"><span class="stat-label">Acesso Remoto Tox</span><span>📡</span></div>
+        <div class="stat-value" id="s-tox"><span class="spin"></span></div><div class="stat-sub" id="s-tox-sub">--</div></div>
+      <div class="stat-card"><div class="stat-header"><span class="stat-label">Antivírus</span><span>🦠</span></div>
+        <div class="stat-value" id="s-av"><span class="spin"></span></div><div class="stat-sub" id="s-av-sub">--</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">🖥️ Recursos do Sistema</div><span class="ts" id="sys-ts"></span></div>
+      <div class="card-body"><div class="sys-grid">
+        <div class="sys-item"><div class="sv" id="sys-cpu">--</div><div class="sl">CPU</div></div>
+        <div class="sys-item"><div class="sv" id="sys-mem">--</div><div class="sl">Memória</div></div>
+        <div class="sys-item"><div class="sv" id="sys-disk">--</div><div class="sl">Disco</div></div>
+        <div class="sys-item"><div class="sv" id="sys-up">--</div><div class="sl">Uptime</div></div>
+      </div></div>
+    </div>
+
+    <div class="card-title" style="margin-bottom:.75rem">🛡️ Status dos Módulos</div>
+    <div class="modulos-grid">
+      <div class="modulo-card">
+        <div class="modulo-header"><div class="modulo-nome">🔥 Firewall UFW</div><span id="m-ufw-badge" class="badge badge-gray">--</span></div>
+        <div class="modulo-status" id="m-ufw-status">--</div>
+        <div class="small">Regras: <strong id="m-ufw-regras">--</strong></div>
+        <a href="/firewall" class="modulo-link">Gerenciar →</a></div>
+
+      <div class="modulo-card">
+        <div class="modulo-header"><div class="modulo-nome">📡 Acesso Remoto Tox</div><span id="m-tox-badge" class="badge badge-gray">--</span></div>
+        <div class="modulo-status" id="m-tox-status">--</div>
+        <div class="small">Amigos: <strong id="m-tox-amigos">--</strong> · Serviços ativos: <strong id="m-tox-srv">--</strong></div>
+        <a href="/tox" class="modulo-link">Gerenciar →</a></div>
+
+      <div class="modulo-card">
+        <div class="modulo-header"><div class="modulo-nome">🧅 Tor Hidden Services</div><span id="m-tor-badge" class="badge badge-gray">--</span></div>
+        <div class="modulo-status" id="m-tor-status">--</div>
+        <div class="small">Serviços: <strong id="m-tor-total">--</strong></div>
+        <a href="/tor" class="modulo-link">Gerenciar →</a></div>
+
+      <div class="modulo-card">
+        <div class="modulo-header"><div class="modulo-nome">🔍 DNS Seguro (Unbound)</div><span id="m-dns-badge" class="badge badge-gray">--</span></div>
+        <div class="modulo-status" id="m-dns-status">--</div>
+        <div><div class="small" style="display:flex;justify-content:space-between"><span>Cache: <strong id="m-dns-cache">--%</strong></span>
+          <span>Consultas: <strong id="m-dns-total">--</strong></span></div>
+          <div class="prog-bar"><div class="prog-fill" id="m-dns-prog" style="width:0%"></div></div></div>
+        <a href="/dns" class="modulo-link">Gerenciar →</a></div>
+
+      <div class="modulo-card">
+        <div class="modulo-header"><div class="modulo-nome">🦠 Antivírus (ClamAV)</div><span id="m-av-badge" class="badge badge-gray">--</span></div>
+        <div class="modulo-status" id="m-av-status">--</div>
+        <div class="small">Quarentena: <strong id="m-av-q">--</strong> · Scan: <strong id="m-av-scan">--</strong></div>
+        <a href="/antivirus" class="modulo-link">Gerenciar →</a></div>
+
+      <div class="modulo-card">
+        <div class="modulo-header"><div class="modulo-nome">🔒 AppArmor</div><span id="m-aa-badge" class="badge badge-gray">--</span></div>
+        <div class="modulo-status" id="m-aa-status">--</div>
+        <div class="small">Perfis enforce: <strong id="m-aa-perfis">--</strong></div>
+        <a href="/selinux" class="modulo-link">Gerenciar →</a></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-header"><div class="card-title">🔥 Firewall</div><a href="/firewall" class="btn btn-ghost">→</a></div>
+        <div class="card-body"><div class="info-grid">
+          <div class="info-item"><div class="lbl">Status</div><div class="val" id="d-ufw-st">--</div></div>
+          <div class="info-item"><div class="lbl">Regras</div><div class="val" id="d-ufw-r">--</div></div>
+          <div class="info-item"><div class="lbl">Política Entrada</div><div class="val" id="d-ufw-in">--</div></div>
+          <div class="info-item"><div class="lbl">Política Saída</div><div class="val" id="d-ufw-out">--</div></div>
+        </div></div></div>
+
+      <div class="card"><div class="card-header"><div class="card-title">📡 Acesso Remoto Tox</div><a href="/tox" class="btn btn-ghost">→</a></div>
+        <div class="card-body"><div class="info-grid">
+          <div class="info-item"><div class="lbl">Serviço</div><div class="val" id="d-tox-st">--</div></div>
+          <div class="info-item"><div class="lbl">Rede Tox</div><div class="val" id="d-tox-rede">--</div></div>
+          <div class="info-item"><div class="lbl">Amigos conectados</div><div class="val" id="d-tox-am">--</div></div>
+          <div class="info-item"><div class="lbl">Serviços publicados</div><div class="val" id="d-tox-srv">--</div></div>
+        </div></div></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card"><div class="card-header"><div class="card-title">🔍 DNS Seguro</div><a href="/dns" class="btn btn-ghost">→</a></div>
+        <div class="card-body"><div class="info-grid">
+          <div class="info-item"><div class="lbl">Status</div><div class="val" id="d-dns-st">--</div></div>
+          <div class="info-item"><div class="lbl">Porta</div><div class="val" id="d-dns-porta">--</div></div>
+          <div class="info-item"><div class="lbl">Cache Hit %</div><div class="val" id="d-dns-cache">--</div></div>
+          <div class="info-item"><div class="lbl">Total Consultas</div><div class="val" id="d-dns-total">--</div></div>
+        </div></div></div>
+
+      <div class="card"><div class="card-header"><div class="card-title">🦠 Antivírus</div><a href="/antivirus" class="btn btn-ghost">→</a></div>
+        <div class="card-body"><div class="info-grid">
+          <div class="info-item"><div class="lbl">ClamAV</div><div class="val" id="d-av-st">--</div></div>
+          <div class="info-item"><div class="lbl">Proteção Real</div><div class="val" id="d-av-rt">--</div></div>
+          <div class="info-item"><div class="lbl">Quarentena</div><div class="val" id="d-av-q">--</div></div>
+          <div class="info-item"><div class="lbl">Último Update</div><div class="val" id="d-av-upd">--</div></div>
+        </div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Export/Import -->
+<div id="modalEI" style="display:none;position:fixed;inset:0;background:#00000088;z-index:500;align-items:center;justify-content:center">
+  <div style="background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.5rem;width:100%;max-width:560px;max-height:90vh;overflow-y:auto">
+    <div style="font-size:1rem;font-weight:600;margin-bottom:1.25rem">💾 Exportar / Importar Configurações</div>
+    <div style="margin-bottom:1.5rem">
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:.75rem;color:var(--accent)">📤 Exportar</div>
+      <div id="categoriasExport" style="display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem"></div>
+      <div class="small" style="margin-bottom:.75rem">A chave privada do Tox nunca é exportada.</div>
+      <button class="btn" style="background:var(--accent);color:#fff" onclick="exportarConfig()">⬇️ Baixar Configurações</button>
+    </div>
+    <hr style="border-color:var(--border);margin-bottom:1.5rem">
+    <div>
+      <div style="font-size:.85rem;font-weight:600;margin-bottom:.75rem;color:var(--success)">📥 Importar</div>
+      <input type="file" id="arqImport" accept=".json" onchange="previewImport()"
+        style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.5rem;color:var(--text);width:100%;margin-bottom:.75rem">
+      <div id="previewImport" style="display:none;background:var(--bg3);border-radius:8px;padding:.75rem;margin-bottom:.75rem;font-size:.8rem"></div>
+      <div id="categoriasImport" style="display:none;margin-bottom:.75rem"></div>
+      <button class="btn" style="background:var(--success);color:#fff;display:none" id="btnImport" onclick="importarConfig()">📥 Importar Selecionados</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+      <button class="btn btn-ghost" onclick="document.getElementById('modalEI').style.display='none'">Fechar</button></div>
+  </div>
+</div>
+<div id="tw"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const txt=(id,v)=>{$(id).textContent=v};
+const htm=(id,v)=>{$(id).innerHTML=v};
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MB={g:'badge-g',r:'badge-r',y:'badge-y',b:'badge-b',gray:'badge-gray'};
+const badge=(t,k)=>`<span class="badge ${MB[k]||'badge-gray'}">${esc(t)}</span>`;
+const dot=(ok,t)=>`<span class="dot ${ok?'dot-g':'dot-r'}"></span>${t}`;
+
+setInterval(()=>txt('clock',new Date().toLocaleTimeString('pt-BR')),1000);
+
+function toast(msg,tipo='info'){
+  const ic={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'},el=document.createElement('div');
+  el.className='toast '+tipo;el.innerHTML=`<span>${ic[tipo]||'ℹ️'}</span><span>${esc(msg)}</span>`;
+  $('tw').appendChild(el);setTimeout(()=>el.remove(),5000);
+}
+
+async function carregarStatus(){
+  try{
+    const d=await (await fetch('/api/status_geral')).json();
+    if(!d.sucesso)return;
+
+    txt('s-ip',d.ip_publico||'N/A');
+
+    // UFW
+    const u=d.ufw||{},n=d.regras_count||0;
+    htm('s-ufw',dot(u.ativo,u.ativo?'Ativo':'Inativo'));txt('s-ufw-sub',n+' regras');
+    htm('m-ufw-badge',badge(u.ativo?'Ativo':'Inativo',u.ativo?'g':'r'));
+    txt('m-ufw-status',`Entrada: ${u.politica_entrada||'--'} | Saída: ${u.politica_saida||'--'}`);
+    txt('m-ufw-regras',n);
+    htm('d-ufw-st',badge(u.ativo?'Ativo':'Inativo',u.ativo?'g':'r'));
+    txt('d-ufw-r',n+' regras');txt('d-ufw-in',u.politica_entrada||'--');txt('d-ufw-out',u.politica_saida||'--');
+
+    // Tox
+    const x=d.tox||{},redeTxt={0:'Offline',1:'Conectado (TCP)',2:'Conectado (UDP)'}[x.rede_status]||'--';
+    const xOn=!!x.rodando,xNet=x.rede_status>0;
+    htm('s-tox',dot(xOn&&xNet,xOn?(xNet?'Online':'Conectando'):(x.ativo?'Iniciando':'Inativo')));
+    txt('s-tox-sub',xOn?`${x.servicos_ativos||0} serviço(s) publicado(s)`:'Acesso remoto desligado');
+    htm('m-tox-badge',badge(xOn?(xNet?'Online':'Conectando'):'Inativo',xOn?(xNet?'g':'y'):'r'));
+    txt('m-tox-status',xOn?'Rede: '+redeTxt:'Serviço parado');
+    txt('m-tox-amigos',x.amigos??0);txt('m-tox-srv',x.servicos_ativos??0);
+    htm('d-tox-st',badge(xOn?'Rodando':'Parado',xOn?'g':'r'));
+    txt('d-tox-rede',redeTxt);txt('d-tox-am',x.amigos??0);txt('d-tox-srv',x.servicos_ativos??0);
+
+    // Tor
+    const t=d.tor||{};
+    htm('m-tor-badge',badge(t.servico_ativo?'Ativo':'Inativo',t.servico_ativo?'g':'r'));
+    txt('m-tor-status',t.servico_ativo?'Serviço rodando':'Serviço parado');
+    txt('m-tor-total',t.total||0);
+
+    // DNS
+    const s=d.dns||{},p=s.pct_cache||0;
+    htm('s-dns',dot(s.ativo,s.ativo?'Ativo':'Inativo'));
+    htm('m-dns-badge',badge(s.ativo?'Ativo':'Inativo',s.ativo?'g':'r'));
+    txt('m-dns-status',s.ativo?`Unbound porta ${s.porta||53}`:'Unbound inativo');
+    txt('m-dns-cache',p+'%');txt('m-dns-total',s.total_queries||0);$('m-dns-prog').style.width=p+'%';
+    htm('d-dns-st',badge(s.ativo?'Ativo':'Inativo',s.ativo?'g':'r'));
+    txt('d-dns-porta',(s.porta||53)+'/UDP');txt('d-dns-cache',p+'%');txt('d-dns-total',s.total_queries||0);
+
+    // Antivírus
+    const a=d.antivirus||{};
+    htm('s-av',dot(a.instalado,a.instalado?(a.daemon_ativo?'Proteção Ativa':'Instalado'):'Não instalado'));
+    txt('s-av-sub',a.instalado?`Quarentena: ${a.quarentena||0} arquivo(s)`:'Instale na página do antivírus');
+    htm('m-av-badge',badge(a.daemon_ativo?'Ativo':a.instalado?'Parado':'N/A',a.daemon_ativo?'g':a.instalado?'y':'r'));
+    txt('m-av-status',a.instalado?(a.daemon_ativo?'Proteção em tempo real ativa':'Daemon parado'):'ClamAV não instalado');
+    txt('m-av-q',a.quarentena||0);txt('m-av-scan',a.scan_ativo?'Em andamento':'Aguardando');
+    htm('d-av-st',badge(a.instalado?'Instalado':'Não instalado',a.instalado?'g':'r'));
+    htm('d-av-rt',badge(a.daemon_ativo?'Ativa':'Inativa',a.daemon_ativo?'g':'r'));
+    txt('d-av-q',(a.quarentena||0)+' arquivo(s)');txt('d-av-upd',a.ultimo_update_db||'--');
+
+    // AppArmor
+    const l=d.selinux||{};
+    htm('m-aa-badge',badge(l.ativo?'Enforce':l.instalado?'Inativo':'N/A',l.ativo?'g':l.instalado?'y':'r'));
+    txt('m-aa-status',l.instalado?(l.ativo?`Motor: ${l.motor||'apparmor'}`:'Instalado mas inativo'):'AppArmor não instalado');
+    txt('m-aa-perfis',l.perfis_enforce||0);
+
+    // Sistema
+    const y=d.sistema||{};
+    txt('sys-cpu',y.cpu||'--');txt('sys-mem',y.memoria||'--');txt('sys-disk',y.disco||'--');txt('sys-up',y.uptime||'--');
+    txt('sys-ts','Atualizado: '+(d.timestamp||''));
+  }catch(e){console.error('Erro dashboard:',e)}
+}
+
+// ── export/import ─────────────────────────────────────────
+const CATS=[
+  {id:'ufw_regras',label:'🔥 Regras UFW'},
+  {id:'tor_servicos',label:'🧅 Tor Serviços'},
+  {id:'tox_servicos',label:'📡 Tox Serviços'},
+  {id:'dns_config',label:'🔍 DNS Config'},
+  {id:'av_config',label:'🦠 Antivírus Config'}
+];
+const chip='display:flex;align-items:center;gap:.4rem;font-size:.8rem;cursor:pointer;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:.3rem .6rem';
+
+function abrirExportImport(){
+  $('modalEI').style.display='flex';
+  htm('categoriasExport',CATS.map(c=>`<label style="${chip}"><input type="checkbox" value="${c.id}" checked style="accent-color:var(--accent)">${c.label}</label>`).join(''));
+}
+
+async function exportarConfig(){
+  const cats=[...document.querySelectorAll('#categoriasExport input:checked')].map(i=>i.value);
+  if(!cats.length)return toast('Selecione ao menos uma categoria','error');
+  try{
+    const r=await fetch('/api/config/exportar',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({categorias:cats})});
+    if((r.headers.get('content-type')||'').includes('json')&&!r.headers.get('content-disposition')){
+      const d=await r.json();if(!d.sucesso)return toast(d.erro||'Erro ao exportar','error');
+    }
+    const url=URL.createObjectURL(await r.blob()),a=document.createElement('a');
+    a.href=url;a.download='rrfs_config_export.json';a.click();URL.revokeObjectURL(url);
+    toast('Configurações exportadas!','success');
+  }catch(e){toast('Erro ao exportar','error')}
+}
+
+async function previewImport(){
+  const f=$('arqImport').files[0];if(!f)return;
+  const form=new FormData();form.append('arquivo',f);
+  try{
+    const d=await (await fetch('/api/config/preview_importar',{method:'POST',body:form})).json();
+    if(!d.sucesso)return toast(d.erro,'error');
+    const pv=$('previewImport');pv.style.display='block';
+    pv.innerHTML=`<div style="margin-bottom:.5rem"><strong>Arquivo:</strong> ${esc(f.name)} | <strong>Versão:</strong> ${esc(d.versao)} | <strong>Exportado:</strong> ${esc((d.exportado_em||'--').slice(0,16))}</div>`+
+      Object.entries(d.categorias||{}).map(([k,v])=>`<div class="small">▸ ${esc(k)}: <strong>${v.total}</strong> item(s)</div>`).join('')+
+      '<div class="small" style="margin-top:.4rem">Categorias antigas (VPN/WAN) são ignoradas.</div>';
+    const ci=$('categoriasImport');ci.style.display='block';
+    ci.innerHTML='<div class="small" style="margin-bottom:.5rem;font-weight:600">Selecionar o que importar:</div><div style="display:flex;flex-wrap:wrap;gap:.4rem">'+
+      Object.keys(d.categorias||{}).map(k=>`<label style="${chip}"><input type="checkbox" class="ci-chk" value="${esc(k)}" checked style="accent-color:var(--accent)">${esc(k)}</label>`).join('')+'</div>';
+    $('btnImport').style.display='inline-flex';
+  }catch(e){toast('Erro ao ler arquivo','error')}
+}
+
+async function importarConfig(){
+  const f=$('arqImport').files[0];if(!f)return toast('Selecione um arquivo','error');
+  const cats=[...document.querySelectorAll('.ci-chk:checked')].map(i=>i.value);
+  if(!cats.length)return toast('Selecione ao menos uma categoria','error');
+  const form=new FormData();form.append('arquivo',f);cats.forEach(c=>form.append('categorias',c));
+  try{
+    const d=await (await fetch('/api/config/importar',{method:'POST',body:form})).json();
+    if(d.sucesso){toast(d.mensagem,'success');$('modalEI').style.display='none';carregarStatus()}
+    else toast(d.erro||'Erro ao importar','error');
+  }catch(e){toast('Erro de comunicação','error')}
+}
+
+$('modalEI').addEventListener('click',function(e){if(e.target===this)this.style.display='none'});
+carregarStatus();setInterval(carregarStatus,30000);
+</script>
+</body>
+</html>

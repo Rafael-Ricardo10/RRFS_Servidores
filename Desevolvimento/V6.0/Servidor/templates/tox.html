@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS Servidores - Acesso Remoto Tox</title>
+<style>
+:root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--border:#2a2a3a;--accent:#4f8ef7;--accent2:#7c3aed;--text:#e2e8f0;--text2:#94a3b8;--danger:#ef4444;--success:#22c55e;--warning:#f59e0b;--nav-w:240px}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;display:flex;min-height:100vh}
+.sidebar{width:var(--nav-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto}
+.sidebar-logo{padding:1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.75rem}
+.sidebar-logo .icon{width:40px;height:40px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.2rem}
+.sidebar-logo .title{font-size:.9rem;font-weight:700}.sidebar-logo .sub{font-size:.7rem;color:var(--text2)}
+nav{flex:1;padding:.75rem 0}
+.nav-section{font-size:.65rem;font-weight:700;color:var(--text2);letter-spacing:.08em;text-transform:uppercase;padding:.65rem 1.25rem .3rem}
+.nav-item{display:flex;align-items:center;gap:.65rem;padding:.6rem 1.25rem;color:var(--text2);text-decoration:none;font-size:.875rem;border-left:3px solid transparent}
+.nav-item:hover{background:var(--bg3);color:var(--text)}
+.nav-item.active{background:var(--bg3);color:var(--accent);border-left-color:var(--accent)}
+.nav-item .ni{width:18px;text-align:center}
+.sidebar-bottom{padding:1rem 1.25rem;border-top:1px solid var(--border)}
+.btn-logout{width:100%;background:#2a0a0a;border:1px solid #5a1a1a;border-radius:8px;padding:.6rem;color:#f87171;font-size:.85rem;display:flex;align-items:center;justify-content:center;gap:.5rem;text-decoration:none}
+.main{margin-left:var(--nav-w);flex:1;display:flex;flex-direction:column;min-height:100vh;min-width:0}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:.875rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:1.1rem;font-weight:600}.topbar-right{display:flex;align-items:center;gap:.75rem}
+.content{padding:1.5rem;flex:1}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.25rem}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:1.25rem}
+.grid-2 .card{margin-bottom:0}
+.card-header{padding:.875rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.card-title{font-size:.9rem;font-weight:600}.card-body{padding:1.25rem}
+.info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem}
+.info-item{background:var(--bg3);border-radius:8px;padding:.75rem}
+.info-item .lbl{font-size:.68rem;color:var(--text2);text-transform:uppercase;margin-bottom:.25rem}
+.info-item .val{font-size:.875rem;font-weight:600;word-break:break-all}
+.badge{padding:.2rem .5rem;border-radius:20px;font-size:.68rem;font-weight:600}
+.badge-g{background:#052a1a;color:var(--success);border:1px solid #1a5c3a}
+.badge-r{background:#2a0a0a;color:var(--danger);border:1px solid #5a1a1a}
+.badge-y{background:#2a1a00;color:var(--warning);border:1px solid #5a3a00}
+.badge-b{background:#0a1a2a;color:var(--accent);border:1px solid #1a3a5a}
+.badge-gray{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.45rem .9rem;border-radius:8px;font-size:.82rem;font-weight:500;cursor:pointer;border:none;color:#fff}
+.btn:disabled{opacity:.5;cursor:wait}
+.btn-p{background:var(--accent)}.btn-s{background:var(--success)}.btn-d{background:var(--danger)}.btn-w{background:#b45309}
+.btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+.btn-sm{padding:.25rem .55rem;font-size:.74rem}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
+.alert{border-radius:8px;padding:.75rem 1rem;font-size:.82rem;margin-bottom:1rem;border:1px solid}
+.alert-w{background:#2a1a00;border-color:#5a3a00;color:#fbbf24}
+.alert-d{background:#2a0a0a;border-color:#5a1a1a;color:#f87171}
+.alert-i{background:#0a1a2a;border-color:#1a3a5a;color:#93c5fd}
+.small{font-size:.75rem;color:var(--text2)}
+.mono{font-family:monospace;font-size:.78rem;word-break:break-all}
+.idbox{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.75rem;margin:.75rem 0}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;color:var(--text2);font-size:.68rem;text-transform:uppercase;padding:.5rem .6rem;border-bottom:1px solid var(--border)}
+td{padding:.55rem .6rem;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+.empty{color:var(--text2);font-size:.82rem;text-align:center;padding:1rem}
+.form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.65rem;margin-bottom:.75rem}
+.fg label{display:block;font-size:.68rem;color:var(--text2);text-transform:uppercase;margin-bottom:.25rem}
+.fg label.sw{text-transform:none;font-size:.82rem;color:var(--text);margin:0;padding:.5rem 0}
+input[type=text],input[type=number],select{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:.5rem .6rem;color:var(--text);font-size:.82rem}
+input:focus,select:focus{outline:none;border-color:var(--accent)}
+.sw{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;font-size:.82rem}
+.sw input{accent-color:var(--accent);width:16px;height:16px}
+pre.log{background:var(--bg3);border-radius:8px;padding:.75rem;font-size:.72rem;color:var(--text2);max-height:160px;overflow:auto;white-space:pre-wrap}
+.spin{width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+#tw{position:fixed;bottom:1.5rem;right:1.5rem;display:flex;flex-direction:column;gap:.5rem;z-index:9999}
+.toast{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:.75rem 1rem;font-size:.82rem;min-width:260px;max-width:380px;display:flex;gap:.65rem;box-shadow:0 8px 32px #0006}
+.toast.success{border-color:#1a5c3a}.toast.error{border-color:#5a1a1a}
+.ts{color:var(--text2);font-size:.78rem}
+@media(max-width:1200px){.info-grid,.form-grid{grid-template-columns:repeat(2,1fr)}.grid-2{grid-template-columns:1fr}}
+@media(max-width:768px){.sidebar{display:none}.main{margin-left:0}.info-grid,.form-grid{grid-template-columns:1fr}.content{padding:1rem}.card-body{overflow-x:auto}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="icon">🛡️</div>
+    <div><div class="title">RRFS Servidores</div><div class="sub">v2.5 - Segurança de Rede</div></div></div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a class="nav-item" href="/dashboard"><span class="ni">📊</span>Dashboard</a>
+    <div class="nav-section">Firewall & Acesso Remoto</div>
+    <a class="nav-item" href="/firewall"><span class="ni">🔥</span>Firewall UFW</a>
+    <a class="nav-item active" href="/tox"><span class="ni">📡</span>Acesso Remoto Tox</a>
+    <a class="nav-item" href="/tor"><span class="ni">🧅</span>Tor Hidden Services</a>
+    <div class="nav-section">Proteção</div>
+    <a class="nav-item" href="/dns"><span class="ni">🔍</span>DNS Seguro</a>
+    <a class="nav-item" href="/antivirus"><span class="ni">🦠</span>Antivírus</a>
+    <a class="nav-item" href="/selinux"><span class="ni">🔒</span>AppArmor</a>
+  </nav>
+  <div class="sidebar-bottom"><a href="/logout" class="btn-logout">🚪 Sair</a></div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">📡 Acesso Remoto via Tox</div>
+    <div class="topbar-right"><span class="ts" id="upd">--</span>
+      <button class="btn btn-ghost" onclick="carregar()">🔄 Atualizar</button></div>
+  </div>
+  <div class="content">
+
+    <div id="avisos"></div>
+
+    <!-- Status -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">📡 Serviço Tox</div>
+        <div class="row" id="acoesPrincipais"></div></div>
+      <div class="card-body">
+        <div class="info-grid">
+          <div class="info-item"><div class="lbl">Serviço</div><div class="val" id="i-srv"><span class="spin"></span></div></div>
+          <div class="info-item"><div class="lbl">Rede Tox</div><div class="val" id="i-rede">--</div></div>
+          <div class="info-item"><div class="lbl">Interface de saída</div><div class="val" id="i-if">--</div></div>
+          <div class="info-item"><div class="lbl">Firewall</div><div class="val" id="i-fw">--</div></div>
+        </div>
+        <div class="small" style="margin-top:.75rem">Sem DNS e sem IP público: o Tox usa DHT, UDP hole punching, relays TCP e descoberta local na LAN. O acesso aos serviços exige que o usuário seja um amigo aprovado. Túneis TCP ativos agora: <strong id="i-tun">0</strong></div>
+      </div>
+    </div>
+
+    <!-- Identidade + amigos -->
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><div class="card-title">🆔 Identidade do servidor</div></div>
+        <div class="card-body">
+          <div class="small">ID Tox (informe aos usuários para que adicionem este servidor):</div>
+          <div class="idbox mono" id="idTox">Tox inativo</div>
+          <div class="row">
+            <button class="btn btn-p btn-sm" onclick="copiarId()">📋 Copiar</button>
+            <button class="btn btn-ghost btn-sm" onclick="renovarId()">🔄 Novo ID (nospam)</button>
+            <button class="btn btn-d btn-sm" onclick="resetarIdentidade()">🗑️ Recriar identidade</button>
+          </div>
+          <div class="small" style="margin-top:.75rem">Novo ID: troca só o código anti-spam; a chave e os amigos continuam. Recriar identidade: apaga a chave privada e todos os amigos.</div>
+          <hr style="border-color:var(--border);margin:1rem 0">
+          <label class="sw"><input type="checkbox" id="autoAceitar" onchange="toggleAuto(this.checked)"> Aceitar pedidos de amizade automaticamente</label>
+          <div class="small" style="margin-top:.4rem">⚠️ Ligado: qualquer pessoa que conheça o ID acessa os serviços ativos. Recomendado: desligado e aprovar manualmente.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">👥 Amigos (usuários autorizados)</div></div>
+        <div class="card-body">
+          <div id="pendentes"></div>
+          <div id="amigos"></div>
+          <hr style="border-color:var(--border);margin:1rem 0">
+          <div class="fg"><label>Adicionar por ID Tox (76 caracteres)</label>
+            <div class="row" style="flex-wrap:nowrap"><input type="text" id="novoAmigo" placeholder="ID Tox do usuário" maxlength="76">
+              <button class="btn btn-s" onclick="addAmigo()">➕</button></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Serviços -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🧩 Serviços publicados via Tox</div></div>
+      <div class="card-body">
+        <div id="servicos"></div>
+        <pre class="log" id="teste" style="display:none;margin-top:1rem;max-height:280px"></pre>
+        <hr style="border-color:var(--border);margin:1rem 0">
+        <div class="card-title" style="margin-bottom:.75rem" id="formTitulo">➕ Adicionar serviço</div>
+        <div class="form-grid">
+          <div class="fg"><label>Nome</label><input type="text" id="f-nome" maxlength="60" placeholder="Roteador Mikrotik"></div>
+          <div class="fg"><label>Tipo</label><select id="f-tipo" onchange="ajustaForm()">
+            <option value="http">Web (HTTP/HTTPS)</option>
+            <option value="ssh">SSH (terminal no painel)</option>
+            <option value="tcp">Porta TCP (Winbox, RDP, VNC…)</option></select></div>
+          <div class="fg" id="g-esq"><label>Protocolo do destino</label><select id="f-esq"><option value="http">http</option><option value="https">https</option></select></div>
+          <div class="fg"><label>Porta destino</label><input type="number" id="f-porta" min="1" max="65535" value="80"></div>
+          <div class="fg"><label>Rede (interface)</label><select id="f-if"></select></div>
+          <div class="fg"><label>IP de destino (opcional)</label><input type="text" id="f-ip" placeholder="ex.: 192.168.1.1"></div>
+          <div class="fg" id="g-ext"><label>Porta externa</label>
+            <label class="sw"><input type="checkbox" id="f-ext" onchange="ajustaForm()"> Liberar porta externa</label></div>
+          <div class="fg" id="g-pc"><label>Porta local no cliente</label><input type="number" id="f-pc" min="1" max="65535" placeholder="vazio = igual à porta destino"></div>
+          <div class="fg" style="grid-column:span 2"><label>Comentário</label><input type="text" id="f-com" maxlength="200" placeholder="Descrição exibida ao usuário"></div>
+        </div>
+        <div class="row">
+          <button class="btn btn-s" id="btnSalvarSrv" onclick="salvarServico()">💾 Adicionar</button>
+          <button class="btn btn-ghost" id="btnCancelarEd" style="display:none" onclick="limparForm()">Cancelar edição</button>
+        </div>
+        <div class="small" style="margin-top:.6rem">
+          <strong>Localhost</strong>: o serviço roda neste servidor (inclui containers Docker com porta publicada). <strong>Outra rede/IP</strong>: o servidor alcança um dispositivo da LAN (regra de saída criada automaticamente no UFW). Serviços só ficam acessíveis depois de ativados.<br>
+          <strong>Porta externa</strong>: o cliente abre <span class="mono">127.0.0.1:porta</span> no computador dele e tudo que conectar ali (Winbox, RDP, VNC, SSH nativo, banco de dados…) é levado ao destino pelo Tox. Exemplo MikroTik: tipo <em>Porta TCP</em>, IP do roteador, porta <strong>8291</strong>; no Winbox usar <span class="mono">127.0.0.1:8291</span>. Para o tipo <em>Porta TCP</em> a porta externa é sempre ligada. Cada porta local só pode ser usada por um serviço.<br>
+          Dúvida sobre a porta? Use "Detectar portas" abaixo e "🔎 Testar" no serviço.
+        </div>
+      </div>
+    </div>
+
+    <!-- Detectar portas -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🔎 Portas em escuta neste servidor</div>
+        <button class="btn btn-p btn-sm" onclick="detectar(this)">🔎 Detectar portas</button></div>
+      <div class="card-body">
+        <div id="portas"><div class="empty">Clique em "Detectar portas" para listar o que está escutando (CasaOS, Syncthing, containers Docker…). "Usar" preenche o formulário de serviço.</div></div>
+      </div>
+    </div>
+
+    <!-- Bootstrap -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🌐 Nós de bootstrap</div>
+        <button class="btn btn-p btn-sm" onclick="atualizarNos(this)">⬇️ Atualizar lista online</button></div>
+      <div class="card-body">
+        <div id="nos"></div>
+        <div class="form-grid" style="margin-top:1rem">
+          <div class="fg"><label>IP</label><input type="text" id="n-ip" placeholder="IPv4 ou IPv6"></div>
+          <div class="fg"><label>Porta</label><input type="number" id="n-porta" value="33445"></div>
+          <div class="fg" style="grid-column:span 2"><label>Chave pública (64 hex)</label><input type="text" id="n-chave" maxlength="64"></div>
+        </div>
+        <button class="btn btn-s btn-sm" onclick="addNo()">➕ Adicionar nó</button>
+        <div class="small" style="margin-top:.6rem">Os nós ficam salvos em disco. Sem internet, o Tox reconecta com os nós guardados na identidade e funciona na LAN por descoberta local. Você pode adicionar nós de confiança manualmente.</div>
+      </div>
+    </div>
+
+    <!-- Diagnóstico -->
+    <div class="card">
+      <div class="card-header"><div class="card-title">🩺 Diagnóstico</div>
+        <button class="btn btn-ghost btn-sm" onclick="reparar(this)">🔧 Recriar regras do firewall</button></div>
+      <div class="card-body">
+        <div id="fwProb"></div>
+        <div class="small" style="margin-bottom:.4rem">Eventos recentes:</div>
+        <pre class="log" id="eventos">--</pre>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="tw"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const B=(t,k)=>`<span class="badge badge-${k}">${esc(t)}</span>`;
+let ST={},EDIT=null,BUSY=false,PORTAS=[];
+
+function toast(m,t='info'){const ic={success:'✅',error:'❌',info:'ℹ️'},e=document.createElement('div');
+  e.className='toast '+t;e.innerHTML=`<span>${ic[t]||'ℹ️'}</span><span>${esc(m)}</span>`;$('tw').appendChild(e);setTimeout(()=>e.remove(),5000)}
+
+async function api(url,body,btn){
+  if(btn)btn.disabled=true;
+  try{
+    const r=await fetch(url,body===undefined?{}:{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d=await r.json();
+    if(d.mensagem||d.erro)toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    return d;
+  }catch(e){toast('Erro de comunicação','error');return{sucesso:false}}
+  finally{if(btn)btn.disabled=false}
+}
+
+async function carregar(){
+  if(BUSY)return;
+  try{
+    const d=await (await fetch('/api/tox/status')).json();
+    if(!d.sucesso)return;ST=d.status;render();
+    $('upd').textContent='Atualizado: '+new Date().toLocaleTimeString('pt-BR');
+  }catch(e){console.error(e)}
+}
+
+function tipoTxt(x){return x.tipo==='ssh'?'SSH':x.tipo==='tcp'?'TCP':esc((x.esquema||'http').toUpperCase())}
+
+function render(){
+  const s=ST,on=!!s.rodando,net=s.rede_status>0;
+  let av='';
+  if(!s.lib_ok)av+=`<div class="alert alert-d">⚠️ A biblioteca <strong>libtoxcore</strong> não foi encontrada. <button class="btn btn-p btn-sm" onclick="instalarDeps(this)">📦 Instalar dependências</button>
+    <div class="small" style="margin-top:.4rem">Se o apt não tiver o pacote, compile o c-toxcore e execute <code>ldconfig</code>.</div></div>`;
+  if(!s.paramiko_ok)av+='<div class="alert alert-w">paramiko não instalado: o serviço SSH via Tox ficará indisponível (<code>apt install python3-paramiko</code>).</div>';
+  if(s.aceitar_automatico)av+='<div class="alert alert-w">⚠️ Aceite automático de amigos está LIGADO.</div>';
+  if(s.ativo&&!on)av+='<div class="alert alert-w">O Tox está marcado como ativo mas não iniciou. Veja os eventos abaixo ou tente ativar novamente.</div>';
+  $('avisos').innerHTML=av;
+
+  $('acoesPrincipais').innerHTML=on
+    ?'<button class="btn btn-d" onclick="desativar(this)">⏹️ Desativar Tox</button>'
+    :'<button class="btn btn-s" onclick="ativar(this)">▶️ Ativar Tox</button>';
+  $('i-srv').innerHTML=on?B('Rodando','g'):B(s.ativo?'Falhou':'Parado','r');
+  $('i-rede').innerHTML=on?B(s.rede_texto||'--',net?'g':'y'):B('--','gray');
+  $('i-if').textContent=s.interface_saida||'(rota padrão não encontrada)';
+  $('i-fw').innerHTML=s.fw_ok?B('Regras OK','g'):B((s.fw_problemas||[]).length+' pendência(s)',on?'r':'gray');
+  $('i-tun').textContent=s.tuneis_ativos||0;
+
+  $('idTox').textContent=s.endereco||'Ative o Tox para gerar o ID';
+  $('autoAceitar').checked=!!s.aceitar_automatico;
+
+  const p=s.pendentes||[];
+  $('pendentes').innerHTML=p.length?'<div class="small" style="margin-bottom:.4rem">Pedidos pendentes:</div>'+p.map(x=>`
+    <div class="idbox" style="margin:.4rem 0"><div class="mono">${esc(x.chave)}</div>
+    <div class="small">${esc(x.mensagem||'(sem mensagem)')} · ${esc((x.data||'').slice(0,16).replace('T',' '))}</div>
+    <div class="row" style="margin-top:.4rem"><button class="btn btn-s btn-sm" onclick="aprovar('${esc(x.chave)}')">✔ Aprovar</button>
+    <button class="btn btn-d btn-sm" onclick="rejeitar('${esc(x.chave)}')">✖ Rejeitar</button></div></div>`).join(''):'';
+
+  const a=s.amigos||[];
+  $('amigos').innerHTML=a.length?`<table><tr><th>#</th><th>Chave pública</th><th>Estado</th><th></th></tr>`+a.map(x=>`
+    <tr><td>${x.numero}</td><td class="mono">${esc((x.chave_publica||'').slice(0,24))}…</td>
+    <td>${x.conectado?B('Conectado','g'):B('Offline','gray')}</td>
+    <td><button class="btn btn-d btn-sm" onclick="remAmigo(${x.numero})">🗑️</button></td></tr>`).join('')+'</table>'
+    :'<div class="empty">Nenhum amigo autorizado ainda</div>';
+
+  const sv=s.servicos||[];
+  $('servicos').innerHTML=sv.length?`<table><tr><th>Nome</th><th>Tipo</th><th>Destino</th><th>Porta externa</th><th>Estado</th><th>Ações</th></tr>`+sv.map(x=>`
+    <tr><td><strong>${esc(x.nome)}</strong>${x.builtin?' '+B('padrão','b'):''}<div class="small">${esc(x.comentario||'')}</div></td>
+    <td>${tipoTxt(x)}</td>
+    <td class="mono">${esc(x.host)}:${x.porta}<div class="small">${esc(x.interface||'localhost')}</div></td>
+    <td>${x.porta_externa?B('127.0.0.1:'+(x.porta_cliente||x.porta),'b'):B('desligada','gray')}</td>
+    <td>${x.ativo?B('Publicado','g'):B('Desativado','gray')}</td>
+    <td><div class="row">
+      <button class="btn ${x.ativo?'btn-w':'btn-s'} btn-sm" onclick="alternar('${esc(x.id)}')">${x.ativo?'⏸ Desativar':'▶ Ativar'}</button>
+      <button class="btn btn-ghost btn-sm" title="Testar conexão com o serviço" onclick="testar('${esc(x.id)}',this)">🔎 Testar</button>
+      ${x.builtin?`<button class="btn btn-ghost btn-sm" title="Liberar/desligar porta externa" onclick="portaExt('${esc(x.id)}')">🔌</button>`:`<button class="btn btn-ghost btn-sm" onclick="editar('${esc(x.id)}')">✏️</button>
+      <button class="btn btn-d btn-sm" onclick="remServico('${esc(x.id)}')">🗑️</button>`}</div></td></tr>`).join('')+'</table>'
+    :'<div class="empty">Nenhum serviço cadastrado</div>';
+
+  const fp=s.fw_problemas||[];
+  $('fwProb').innerHTML=fp.length?'<div class="alert alert-w">Regras ausentes no firewall:<br>'+fp.map(x=>'• '+esc(x.desc)+' <span class="small">('+esc(x.nome)+')</span>').join('<br>')+'</div>':'';
+  $('eventos').textContent=(s.eventos||[]).join('\n')||'(sem eventos)';
+}
+
+// ── ações principais ──
+async function ativar(b){BUSY=true;const d=await api('/api/tox/ativar',{},b);BUSY=false;carregar();carregarNos()}
+async function desativar(b){if(!confirm('Desativar o acesso remoto via Tox? Sessões e túneis ativos serão encerrados.'))return;
+  BUSY=true;await api('/api/tox/desativar',{},b);BUSY=false;carregar()}
+async function instalarDeps(b){b.textContent='Instalando…';await api('/api/tox/instalar_dependencias',{},b);carregar()}
+async function reparar(b){await api('/api/tox/reparar_firewall',{},b);carregar()}
+
+// ── identidade ──
+async function copiarId(){const v=ST.endereco;if(!v)return toast('Tox inativo','error');
+  try{await navigator.clipboard.writeText(v)}catch(e){const t=document.createElement('textarea');t.value=v;document.body.appendChild(t);t.select();document.execCommand('copy');t.remove()}
+  toast('ID copiado!','success')}
+async function renovarId(){if(!ST.rodando)return toast('Ative o Tox primeiro','error');
+  if(!confirm('Gerar novo ID? O ID antigo deixa de funcionar para novos contatos.'))return;await api('/api/tox/chave/renovar',{});carregar()}
+async function resetarIdentidade(){if(!confirm('Apagar a chave privada e TODOS os amigos? Não há como desfazer.'))return;
+  if(!confirm('Confirma? Todos os usuários perderão o acesso.'))return;await api('/api/tox/chave/excluir',{});carregar()}
+async function toggleAuto(v){if(v&&!confirm('Qualquer pessoa com o ID poderá acessar os serviços ativos. Continuar?')){$('autoAceitar').checked=false;return}
+  await api('/api/tox/aceitar_automatico',{ativo:v});carregar()}
+
+// ── amigos ──
+async function addAmigo(){const e=$('novoAmigo').value.trim();if(!e)return;
+  const d=await api('/api/tox/amigos/adicionar',{endereco:e,mensagem:'RRFS Servidor'});if(d.sucesso)$('novoAmigo').value='';carregar()}
+async function remAmigo(n){if(!confirm('Remover este amigo? Ele perde o acesso.'))return;await api('/api/tox/amigos/remover',{numero:n});carregar()}
+async function aprovar(c){await api('/api/tox/amigos/aprovar',{chave:c});carregar()}
+async function rejeitar(c){await api('/api/tox/amigos/rejeitar',{chave:c});carregar()}
+
+// ── serviços ──
+function ajustaForm(){
+  const t=$('f-tipo').value,ssh=t==='ssh',tcp=t==='tcp';
+  $('g-esq').style.display=(ssh||tcp)?'none':'block';
+  if(tcp){$('f-ext').checked=true;$('f-ext').disabled=true}else{$('f-ext').disabled=false}
+  $('g-pc').style.display=$('f-ext').checked?'block':'none';
+  if(!EDIT){
+    if(ssh)$('f-porta').value=22;
+    else if(tcp&&[80,22].includes(+$('f-porta').value))$('f-porta').value=8291;
+  }
+}
+async function carregarInterfaces(){
+  let h='<option value="localhost">localhost (este servidor)</option>';
+  try{const d=await (await fetch('/api/firewall/status')).json();
+    (d.interfaces||[]).filter(i=>i.nome&&i.nome!=='lo').forEach(i=>{h+=`<option value="${esc(i.nome)}">${esc(i.label||i.nome)}</option>`})}catch(e){}
+  $('f-if').innerHTML=h}
+function limparForm(){EDIT=null;['f-nome','f-ip','f-com','f-pc'].forEach(i=>$(i).value='');$('f-porta').value=80;$('f-tipo').value='http';$('f-tipo').disabled=false;
+  $('f-esq').value='http';$('f-if').value='localhost';$('f-ext').checked=false;$('f-ext').disabled=false;
+  $('formTitulo').textContent='➕ Adicionar serviço';
+  $('btnSalvarSrv').textContent='💾 Adicionar';$('btnCancelarEd').style.display='none';ajustaForm()}
+function editar(id){const s=(ST.servicos||[]).find(x=>x.id===id);if(!s)return;EDIT=id;
+  $('f-nome').value=s.nome;$('f-tipo').value=s.tipo;$('f-tipo').disabled=true;$('f-esq').value=s.esquema||'http';$('f-porta').value=s.porta;
+  $('f-if').value=s.interface||'localhost';$('f-ip').value=(s.interface&&s.interface!=='localhost')?s.host:'';$('f-com').value=s.comentario||'';
+  $('f-ext').checked=!!s.porta_externa;$('f-pc').value=s.porta_cliente||'';
+  $('formTitulo').textContent='✏️ Editando: '+s.nome;$('btnSalvarSrv').textContent='💾 Salvar alterações';$('btnCancelarEd').style.display='inline-flex';
+  ajustaForm();$('f-nome').scrollIntoView({behavior:'smooth',block:'center'})}
+async function salvarServico(){
+  const ext=$('f-ext').checked||$('f-tipo').value==='tcp';
+  const pc=$('f-pc').value.trim();
+  const p={nome:$('f-nome').value.trim(),porta:+$('f-porta').value,interface:$('f-if').value,ip_destino_custom:$('f-ip').value.trim(),
+    tipo:$('f-tipo').value,esquema:$('f-esq').value,comentario:$('f-com').value.trim(),
+    porta_externa:ext,porta_cliente:(ext&&pc!=='')?+pc:null};
+  if(!p.nome)return toast('Informe o nome','error');
+  if(!(p.porta>=1&&p.porta<=65535))return toast('Porta inválida','error');
+  if(p.porta_cliente!==null&&!(p.porta_cliente>=1&&p.porta_cliente<=65535))return toast('Porta local inválida','error');
+  const d=EDIT?await api('/api/tox/servicos/editar',{...p,id:EDIT}):await api('/api/tox/servicos/adicionar',p);
+  if(d.sucesso)limparForm();carregar()}
+async function alternar(id){await api('/api/tox/servicos/alternar',{id});carregar()}
+async function remServico(id){if(!confirm('Remover este serviço?'))return;await api('/api/tox/servicos/remover',{id});carregar()}
+
+// serviços padrão (SSH / Painel): liga/desliga a porta externa
+async function portaExt(id){
+  const s=(ST.servicos||[]).find(x=>x.id===id);if(!s)return;
+  const atual=s.porta_externa?(s.porta_cliente||s.porta):'';
+  const v=prompt('Porta LOCAL no cliente para "'+s.nome+'" (127.0.0.1:porta).\nDeixe VAZIO para desligar a porta externa:',atual);
+  if(v===null)return;
+  const t=v.trim();
+  await api('/api/tox/servicos/editar',{id,nome:s.nome,porta:s.porta,interface:s.interface||'localhost',ip_destino_custom:'',
+    porta_externa:t!=='',porta_cliente:t===''?null:+t});
+  carregar()}
+
+// ── testar serviço ──
+async function testar(id,b){
+  const box=$('teste');box.style.display='block';box.textContent='Testando… (pode levar até ~30s)';
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+  const d=await api('/api/tox/servicos/testar',{id},b);
+  if(!d.sucesso){box.textContent=d.erro||'Falha no teste';return}
+  let t='Serviço: '+d.servico+'\n\n';
+  (d.resultados||[]).forEach(r=>{
+    t+=(r.ok?'✔ ':'✘ ')+r.host+':'+r.porta+'  ('+r.ms+' ms)'+(r.ok?'':'  → '+r.erro)+'\n';
+    if(r.http!==undefined)t+='    '+(r.http_ok?'✔':'✘')+' GET /  → '+r.http+'  ('+r.http_ms+' ms)\n';
+  });
+  t+='\n'+(d.dica||'')+'\n';
+  t+='\nBridges Docker detectadas: '+((d.ifaces_docker||[]).join(', ')||'nenhuma');
+  t+='\nRegras de firewall para Docker: '+((d.regras_docker||[]).join(', ')||'nenhuma (o serviço precisa estar ATIVO)');
+  box.textContent=t}
+
+// ── detectar portas ──
+async function detectar(b){
+  b.disabled=true;$('portas').innerHTML='<div class="empty"><span class="spin"></span> Detectando…</div>';
+  try{
+    const d=await (await fetch('/api/tox/portas')).json();
+    if(!d.sucesso){$('portas').innerHTML='<div class="empty">'+esc(d.erro||'Falha')+'</div>';return}
+    PORTAS=d.portas||[];
+    $('portas').innerHTML=PORTAS.length?`<div style="max-height:320px;overflow:auto"><table><tr><th>Porta</th><th>Escuta em</th><th>Processo / container</th><th></th></tr>`+
+      PORTAS.map((x,i)=>`<tr><td><strong>${x.porta}</strong></td><td class="mono">${esc(x.bind)}</td><td>${esc(x.processo||'—')}</td>
+      <td><button class="btn btn-s btn-sm" onclick="usarPorta(${i})">Usar</button></td></tr>`).join('')+'</table></div>'
+      :'<div class="empty">Nenhuma porta TCP em escuta encontrada</div>';
+  }catch(e){$('portas').innerHTML='<div class="empty">Erro de comunicação</div>'}
+  finally{b.disabled=false}}
+function usarPorta(i){const x=PORTAS[i];if(!x)return;limparForm();
+  let nome=(x.processo||'').replace(/^docker:\s*/,'').replace(/[^\w .\-]/g,'').trim()||('Porta '+x.porta);
+  $('f-nome').value=nome.slice(0,60);$('f-porta').value=x.porta;
+  $('f-esq').value=[443,8443,2000].includes(x.porta)?'https':'http';
+  $('f-com').value=x.processo?('Detectado: '+x.processo):'';
+  $('formTitulo').scrollIntoView({behavior:'smooth',block:'center'});
+  toast('Formulário preenchido. Confira o protocolo (http/https) e clique em Adicionar.','info')}
+
+// ── bootstrap ──
+async function carregarNos(){
+  try{const d=await (await fetch('/api/tox/bootstrap')).json(),n=d.nos||[];
+    $('nos').innerHTML=n.length?`<div class="small" style="margin-bottom:.4rem">${n.length} nó(s) salvo(s)</div><div style="max-height:220px;overflow:auto"><table><tr><th>IP</th><th>Porta</th><th>Origem</th><th></th></tr>`+
+      n.map((x,i)=>`<tr><td class="mono">${esc(x.ip)}</td><td>${x.porta}</td><td>${esc(x.origem||'')}</td><td><button class="btn btn-d btn-sm" onclick="remNo(${i})">🗑️</button></td></tr>`).join('')+'</table></div>'
+      :'<div class="empty">Nenhum nó salvo. Clique em "Atualizar lista online" (precisa de internet) ou adicione manualmente.</div>'}catch(e){}}
+async function atualizarNos(b){b.disabled=true;b.textContent='Buscando…';await api('/api/tox/bootstrap/atualizar',{});b.disabled=false;b.textContent='⬇️ Atualizar lista online';carregarNos();carregar()}
+async function addNo(){const d=await api('/api/tox/bootstrap/adicionar',{ip:$('n-ip').value.trim(),porta:+$('n-porta').value,chave_publica:$('n-chave').value.trim()});
+  if(d.sucesso){$('n-ip').value='';$('n-chave').value=''}carregarNos();carregar()}
+async function remNo(i){await api('/api/tox/bootstrap/remover',{indice:i});carregarNos();carregar()}
+
+carregarInterfaces();carregar();carregarNos();ajustaForm();
+setInterval(carregar,5000);
+</script>
+</body>
+</html>

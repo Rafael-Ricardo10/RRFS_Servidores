@@ -1,0 +1,12 @@
+servidor/
+├── app.py
+├── dados/              (criado automaticamente)
+└── templates/
+    └── index.html
+
+cliente/
+├── app.py
+├── dados/              (criado automaticamente)
+└── templates/
+    ├── login.html
+    └── dashboard.html

@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS - Tor Hidden Services</title>
+<style>
+  :root{
+    --bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;--bg4:#22222f;
+    --border:#2a2a3a;--accent:#4f8ef7;--accent2:#7c3aed;
+    --text:#e2e8f0;--text2:#94a3b8;--danger:#ef4444;
+    --success:#22c55e;--warning:#f59e0b;--nav-w:240px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    display:flex;min-height:100vh;}
+  .sidebar{width:var(--nav-w);background:var(--bg2);
+    border-right:1px solid var(--border);display:flex;
+    flex-direction:column;position:fixed;top:0;left:0;
+    height:100vh;z-index:100;}
+  .sidebar-logo{padding:1.5rem 1.25rem;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:0.75rem;}
+  .sidebar-logo .icon{width:40px;height:40px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:10px;display:flex;align-items:center;
+    justify-content:center;font-size:1.2rem;flex-shrink:0;}
+  .sidebar-logo .title{font-size:0.9rem;font-weight:700;}
+  .sidebar-logo .sub{font-size:0.7rem;color:var(--text2);}
+  nav{flex:1;padding:1rem 0;overflow-y:auto;}
+  .nav-section{font-size:0.68rem;font-weight:700;color:var(--text2);
+    letter-spacing:0.08em;text-transform:uppercase;
+    padding:0.75rem 1.25rem 0.4rem;}
+  .nav-item{display:flex;align-items:center;gap:0.75rem;
+    padding:0.65rem 1.25rem;color:var(--text2);text-decoration:none;
+    font-size:0.9rem;border-left:3px solid transparent;
+    transition:background 0.15s,color 0.15s;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:var(--bg3);color:var(--accent);
+    border-left-color:var(--accent);}
+  .nav-item .nav-icon{font-size:1.05rem;width:20px;text-align:center;}
+  .sidebar-bottom{padding:1rem 1.25rem;border-top:1px solid var(--border);}
+  .btn-logout{width:100%;background:#2a0a0a;border:1px solid #5a1a1a;
+    border-radius:8px;padding:0.6rem;color:#f87171;font-size:0.85rem;
+    cursor:pointer;display:flex;align-items:center;
+    justify-content:center;gap:0.5rem;text-decoration:none;}
+  .btn-logout:hover{background:#3a0a0a;}
+  .main{margin-left:var(--nav-w);flex:1;display:flex;
+    flex-direction:column;min-height:100vh;}
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);
+    padding:1rem 1.75rem;display:flex;align-items:center;
+    justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-title{font-size:1.15rem;font-weight:600;}
+  .topbar-right{display:flex;align-items:center;gap:0.75rem;}
+  .content{padding:1.75rem;flex:1;}
+  .card{background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;margin-bottom:1.5rem;}
+  .card-header{padding:1rem 1.25rem;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem;}
+  .card-title{font-size:0.95rem;font-weight:600;
+    display:flex;align-items:center;gap:0.5rem;}
+  .card-body{padding:1.25rem;}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:1.5rem;}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;padding:1.25rem;}
+  .stat-label{font-size:0.75rem;color:var(--text2);text-transform:uppercase;
+    letter-spacing:0.05em;margin-bottom:0.5rem;}
+  .stat-value{font-size:1.4rem;font-weight:700;}
+  .stat-sub{font-size:0.78rem;color:var(--text2);margin-top:0.25rem;}
+  .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:0.35rem;}
+  .dot-g{background:var(--success);box-shadow:0 0 6px var(--success);}
+  .dot-r{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+  .dot-y{background:var(--warning);box-shadow:0 0 6px var(--warning);}
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;
+    padding:0.5rem 1rem;border-radius:8px;font-size:0.85rem;
+    font-weight:500;cursor:pointer;border:none;
+    transition:opacity 0.2s,transform 0.1s;text-decoration:none;}
+  .btn:active{transform:scale(0.97);}
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-success{background:#16a34a;color:white;}
+  .btn-danger{background:var(--danger);color:white;}
+  .btn-warning{background:var(--warning);color:#000;}
+  .btn-ghost{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);}
+  .btn-sm{padding:0.35rem 0.7rem;font-size:0.78rem;}
+  .btn-purple{background:#7c3aed;color:white;}
+  .badge{padding:0.2rem 0.5rem;border-radius:20px;font-size:0.7rem;font-weight:600;}
+  .badge-green{background:#052a1a;color:var(--success);border:1px solid #1a5c3a;}
+  .badge-red{background:#2a0a0a;color:var(--danger);border:1px solid #5a1a1a;}
+  .badge-yellow{background:#2a1a00;color:var(--warning);border:1px solid #5a3a00;}
+  .badge-blue{background:#0a1a2a;color:var(--accent);border:1px solid #1a3a5a;}
+  .badge-gray{background:var(--bg3);color:var(--text2);border:1px solid var(--border);}
+  .badge-purple{background:#1a0a2a;color:#a78bfa;border:1px solid #4c1d95;}
+  .form-group{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;}
+  .form-group label{font-size:0.78rem;color:var(--text2);
+    font-weight:500;text-transform:uppercase;letter-spacing:0.04em;}
+  .form-group input,.form-group select{background:var(--bg3);
+    border:1px solid var(--border);border-radius:8px;
+    padding:0.65rem 0.875rem;color:var(--text);font-size:0.9rem;
+    outline:none;transition:border-color 0.2s;}
+  .form-group input:focus,.form-group select:focus{border-color:var(--accent);}
+  .form-grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;}
+  .form-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;}
+  /* onion card */
+  .onion-card{background:var(--bg3);border:1px solid var(--border);
+    border-radius:10px;padding:1rem;margin-bottom:1rem;
+    transition:border-color 0.2s;}
+  .onion-card:hover{border-color:#3a3a50;}
+  .onion-header{display:flex;align-items:center;
+    justify-content:space-between;margin-bottom:0.75rem;flex-wrap:wrap;gap:0.5rem;}
+  .onion-name{font-weight:600;font-size:0.95rem;
+    display:flex;align-items:center;gap:0.5rem;}
+  .onion-addr{font-family:monospace;font-size:0.78rem;
+    color:var(--accent);background:var(--bg);
+    border:1px solid var(--border);border-radius:6px;
+    padding:0.5rem 0.75rem;word-break:break-all;
+    margin-bottom:0.75rem;display:flex;
+    align-items:center;justify-content:space-between;gap:0.5rem;}
+  .onion-meta{display:flex;gap:1rem;font-size:0.78rem;
+    color:var(--text2);flex-wrap:wrap;}
+  .onion-actions{display:flex;gap:0.4rem;flex-wrap:wrap;margin-top:0.75rem;}
+  /* modal */
+  .modal-overlay{display:none;position:fixed;inset:0;
+    background:#00000088;z-index:500;align-items:center;justify-content:center;}
+  .modal-overlay.show{display:flex;}
+  .modal{background:var(--bg2);border:1px solid var(--border);
+    border-radius:14px;padding:1.5rem;width:100%;max-width:520px;
+    max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px #00000099;}
+  .modal-title{font-size:1rem;font-weight:600;margin-bottom:1.25rem;
+    display:flex;align-items:center;gap:0.5rem;}
+  .modal-footer{display:flex;gap:0.75rem;justify-content:flex-end;
+    margin-top:1.25rem;padding-top:1rem;border-top:1px solid var(--border);}
+  /* controle tor */
+  .tor-control{display:flex;align-items:center;gap:1rem;
+    padding:1rem 1.25rem;background:var(--bg3);
+    border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .tor-status-big{font-size:1rem;font-weight:600;
+    display:flex;align-items:center;gap:0.5rem;}
+  #toast-wrap{position:fixed;bottom:1.5rem;right:1.5rem;
+    display:flex;flex-direction:column;gap:0.5rem;z-index:9999;}
+  .toast{background:var(--bg2);border:1px solid var(--border);
+    border-radius:10px;padding:0.875rem 1.25rem;font-size:0.85rem;
+    min-width:280px;max-width:380px;display:flex;
+    align-items:center;gap:0.75rem;box-shadow:0 8px 32px #00000066;
+    animation:slideIn 0.3s ease;}
+  @keyframes slideIn{
+    from{transform:translateX(120%);opacity:0;}
+    to{transform:translateX(0);opacity:1;}}
+  .toast.success{border-color:#1a5c3a;}
+  .toast.error{border-color:#5a1a1a;}
+  .toast.warning{border-color:#5a3a00;}
+  .empty-state{text-align:center;padding:3rem;color:var(--text2);}
+  .empty-state .empty-icon{font-size:3rem;margin-bottom:1rem;}
+  .empty-state p{font-size:0.9rem;margin-bottom:1rem;}
+  .spin{width:20px;height:20px;border:2px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;
+    animation:spin 0.8s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  @media(max-width:768px){
+    .sidebar{display:none;}.main{margin-left:0;}
+    .grid-2{grid-template-columns:1fr;}
+    .form-grid-2,.form-grid-3{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">🛡️</div>
+    <div><div class="title">RRFS</div><div class="sub">Segurança de Rede</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a class="nav-item" href="/dashboard"><span class="nav-icon">📊</span>Dashboard</a>
+    <div class="nav-section">Segurança</div>
+    <a class="nav-item" href="/firewall"><span class="nav-icon">🔥</span>Firewall UFW</a>
+    <a class="nav-item active" href="/tor"><span class="nav-icon">🧅</span>Tor Hidden Services</a>
+    <div class="nav-section">Rede</div>
+    <a class="nav-item" href="/conexao"><span class="nav-icon">🌐</span>Conexão</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="/logout" class="btn-logout">🚪 Sair</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">🧅 Tor Hidden Services</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="carregarStatus()">🔄 Atualizar</button>
+      <button class="btn btn-primary" onclick="abrirModalAdicionar()">+ Novo Serviço</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- controle Tor -->
+    <div class="card">
+      <div class="tor-control">
+        <div class="tor-status-big" id="torStatusBig">
+          <span class="spin"></span> Verificando...
+        </div>
+        <button class="btn btn-success" id="btnAtivar"
+          onclick="ativarTor()" style="display:none">
+          ▶ Ativar Tor
+        </button>
+        <button class="btn btn-danger" id="btnDesativar"
+          onclick="desativarTor()" style="display:none">
+          ⏹ Desativar Tor
+        </button>
+        <span style="font-size:0.8rem;color:var(--text2);margin-left:auto">
+          ⚠️ Regras UFW são gerenciadas automaticamente
+        </span>
+      </div>
+
+      <!-- stats -->
+      <div class="grid-2" style="padding:1rem;margin-bottom:0;">
+        <div class="stat-card" style="margin:0;">
+          <div class="stat-label">Serviço Tor</div>
+          <div class="stat-value" id="torSvcStatus">--</div>
+          <div class="stat-sub" id="torInstalado">--</div>
+        </div>
+        <div class="stat-card" style="margin:0;">
+          <div class="stat-label">Serviços Onion Ativos</div>
+          <div class="stat-value" id="torTotal">0</div>
+          <div class="stat-sub">hidden services configurados</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- lista de serviços -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🧅 Serviços Hidden</div>
+        <span class="badge badge-gray" id="totalServicos">0 serviços</span>
+      </div>
+      <div class="card-body" id="listaServicos">
+        <div class="empty-state">
+          <div class="empty-icon">🧅</div>
+          <p>Carregando serviços...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Adicionar/Editar -->
+<div class="modal-overlay" id="modalServico">
+  <div class="modal">
+    <div class="modal-title" id="modalTitulo">➕ Novo Hidden Service</div>
+
+    <input type="hidden" id="editNomeOriginal">
+
+    <div class="form-group">
+      <label>Nome do Serviço</label>
+      <input type="text" id="sNome" placeholder="Ex: meu-site">
+    </div>
+
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label>Interface de Rede</label>
+        <select id="sInterface">
+          <option value="localhost">localhost (127.0.0.1)</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Porta do Servidor Local</label>
+        <input type="number" id="sPortaDestino"
+          placeholder="Ex: 8080" min="1" max="65535">
+      </div>
+    </div>
+
+    <div class="form-grid-2">
+      <div class="form-group">
+        <label>Porta Onion (pública)</label>
+        <input type="number" id="sPortaVirtual"
+          value="80" min="1" max="65535">
+        <span style="font-size:0.72rem;color:var(--text2)">
+          Porta que aparece no link .onion (padrão: 80)
+        </span>
+      </div>
+      <div class="form-group">
+        <label>Prévia do endereço</label>
+        <div style="background:var(--bg3);border:1px solid var(--border);
+          border-radius:8px;padding:0.65rem 0.875rem;
+          font-size:0.78rem;color:var(--text2);font-family:monospace;">
+          xxxxxxxx.onion:<span id="prevPorta">80</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#0a1a2a;border:1px solid #1a3a5a;
+      border-radius:8px;padding:0.75rem;font-size:0.8rem;color:var(--accent);
+      margin-bottom:1rem;">
+      ℹ️ A regra UFW será criada <strong>automaticamente</strong>.
+      O endereço .onion é gerado pelo Tor após salvar.
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarServico()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Renovar Onion -->
+<div class="modal-overlay" id="modalRenovar">
+  <div class="modal">
+    <div class="modal-title">🔄 Renovar Endereço .onion</div>
+    <input type="hidden" id="renovarNome">
+    <div style="background:#2a0a0a;border:1px solid #5a1a1a;
+      border-radius:8px;padding:1rem;margin-bottom:1rem;
+      font-size:0.85rem;color:#f87171;">
+      ⚠️ <strong>Atenção!</strong> Ao renovar, o endereço .onion atual
+      será <strong>permanentemente perdido</strong>. Um novo endereço
+      será gerado. Esta ação não pode ser desfeita.
+    </div>
+    <p style="font-size:0.9rem;color:var(--text2);margin-bottom:1rem;">
+      Serviço: <strong id="renovarNomeDisplay" style="color:var(--text)">--</strong>
+    </p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="fecharModalRenovar()">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarRenovar()">
+        🔄 Confirmar Renovação
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-wrap"></div>
+
+<script>
+let statusAtual = {};
+
+// ── toast ─────────────────────────────────────────────────
+function toast(msg, tipo='info') {
+  const icons = {success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el = document.createElement('div');
+  el.className = `toast ${tipo}`;
+  el.innerHTML = `<span>${icons[tipo]}</span><span>${msg}</span>`;
+  document.getElementById('toast-wrap').appendChild(el);
+  setTimeout(()=>el.remove(), 5000);
+}
+
+// ── carregar status ───────────────────────────────────────
+async function carregarStatus() {
+  try {
+    const r = await fetch('/api/tor/status');
+    const d = await r.json();
+    if(!d.sucesso) return;
+
+    const s = d.status;
+    statusAtual = s;
+
+    // status principal
+    const ativo = s.servico_ativo;
+    document.getElementById('torStatusBig').innerHTML =
+      ativo
+        ? '<span class="dot dot-g"></span><span style="color:var(--success)">Tor Ativo</span>'
+        : '<span class="dot dot-r"></span><span style="color:var(--danger)">Tor Inativo</span>';
+
+    document.getElementById('torSvcStatus').innerHTML =
+      ativo
+        ? '<span style="color:var(--success)">● Rodando</span>'
+        : '<span style="color:var(--danger)">● Parado</span>';
+
+    document.getElementById('torInstalado').textContent =
+      s.instalado ? 'Tor instalado' : 'Tor não instalado';
+
+    document.getElementById('torTotal').textContent =
+      s.total || 0;
+
+    // botões
+    document.getElementById('btnAtivar').style.display =
+      ativo ? 'none' : 'inline-flex';
+    document.getElementById('btnDesativar').style.display =
+      ativo ? 'inline-flex' : 'none';
+
+    // lista
+    renderizarServicos(s.servicos || []);
+
+    // popular interfaces no modal
+    await popularInterfaces();
+
+  } catch(e) {
+    console.error('Erro carregar tor:', e);
+  }
+}
+
+function renderizarServicos(servicos) {
+  const container = document.getElementById('listaServicos');
+  document.getElementById('totalServicos').textContent =
+    servicos.length + ' serviço(s)';
+
+  if(!servicos.length) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">🧅</div>
+        <p>Nenhum Hidden Service configurado.</p>
+        <button class="btn btn-primary"
+          onclick="abrirModalAdicionar()">
+          + Adicionar primeiro serviço
+        </button>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = servicos.map(s => {
+    const onion   = s.onion || '';
+    const pausado = s.pausado || false;
+    const pv      = s.porta_virtual || 80;
+    const pd      = s.porta_destino || 80;
+
+    let onionUrl = '';
+    if(onion) {
+      onionUrl = pv === 80
+        ? `http://${onion}`
+        : `http://${onion}:${pv}`;
+    }
+
+    return `
+    <div class="onion-card ${pausado?'opacity:0.6':''}">
+      <div class="onion-header">
+        <div class="onion-name">
+          🧅 ${s.nome}
+          ${pausado
+            ? '<span class="badge badge-yellow">Pausado</span>'
+            : '<span class="badge badge-green">Ativo</span>'}
+        </div>
+        <div style="display:flex;gap:0.4rem;align-items:center;">
+          <span class="badge badge-gray">
+            Onion :${pv} → Local :${pd}
+          </span>
+        </div>
+      </div>
+
+      <div class="onion-addr">
+        <span id="onion-${s.nome.replace(/\s/g,'_')}">
+          ${onion
+            ? onionUrl
+            : '<span style="color:var(--text2)">⏳ Aguardando geração...</span>'}
+        </span>
+        ${onion ? `
+          <button class="btn btn-ghost btn-sm"
+            onclick="copiarOnion('${onionUrl}')"
+            title="Copiar endereço">📋</button>
+        ` : `
+          <button class="btn btn-ghost btn-sm"
+            onclick="atualizarOnion('${s.nome}')">
+            🔄
+          </button>
+        `}
+      </div>
+
+      <div class="onion-meta">
+        <span>🖧 Interface: <strong>${s.interface||'localhost'}</strong></span>
+        <span>📍 IP: <code>${s.ip_destino||'127.0.0.1'}</code></span>
+        <span>🔌 Porta local: <strong>${pd}</strong></span>
+        ${s.criado_em
+          ? `<span>📅 ${s.criado_em.slice(0,10)}</span>`
+          : ''}
+      </div>
+
+      <div class="onion-actions">
+        <button class="btn btn-ghost btn-sm"
+          onclick="abrirModalEditar(${JSON.stringify(s).replace(/"/g,'&quot;')})">
+          ✏️ Editar
+        </button>
+        <button class="btn ${pausado?'btn-success':'btn-warning'} btn-sm"
+          onclick="pausarServico('${s.nome}')">
+          ${pausado ? '▶ Reativar' : '⏸ Pausar'}
+        </button>
+        <button class="btn btn-purple btn-sm"
+          onclick="abrirModalRenovar('${s.nome}')">
+          🔄 Renovar .onion
+        </button>
+        <button class="btn btn-danger btn-sm"
+          onclick="removerServico('${s.nome}')">
+          🗑️ Remover
+        </button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function popularInterfaces() {
+  try {
+    const r = await fetch('/api/conexao/interfaces');
+    const d = await r.json();
+    const sel = document.getElementById('sInterface');
+    if(!sel) return;
+    const prev = sel.value;
+    sel.innerHTML =
+      '<option value="localhost">localhost (127.0.0.1)</option>';
+    (d.interfaces || []).forEach(i => {
+      const op = document.createElement('option');
+      op.value = i.nome;
+      op.textContent =
+        `${i.nome} (${i.tipo})${i.ip ? ' - '+i.ip : ''}`;
+      sel.appendChild(op);
+    });
+    sel.value = prev || 'localhost';
+  } catch(e) {}
+}
+
+// ── ativar / desativar ────────────────────────────────────
+async function ativarTor() {
+  const btn = document.getElementById('btnAtivar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Ativando...';
+  toast('Ativando Tor, aguarde...', 'info');
+  try {
+    const r = await fetch('/api/tor/ativar', {method:'POST'});
+    const d = await r.json();
+    toast(d.mensagem || d.erro,
+      d.sucesso ? 'success' : 'error');
+    await carregarStatus();
+  } catch(e) {
+    toast('Erro ao ativar Tor', 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = '▶ Ativar Tor';
+}
+
+async function desativarTor() {
+  if(!confirm('Desativar o Tor? Todos os serviços onion ficarão inacessíveis.')) return;
+  const btn = document.getElementById('btnDesativar');
+  btn.disabled = true;
+  btn.textContent = '⏳ Desativando...';
+  try {
+    const r = await fetch('/api/tor/desativar', {method:'POST'});
+    const d = await r.json();
+    toast(d.mensagem || d.erro,
+      d.sucesso ? 'success' : 'error');
+    await carregarStatus();
+  } catch(e) {
+    toast('Erro ao desativar Tor', 'error');
+  }
+  btn.disabled = false;
+  btn.textContent = '⏹ Desativar Tor';
+}
+
+// ── modal adicionar/editar ────────────────────────────────
+function abrirModalAdicionar() {
+  document.getElementById('modalTitulo').textContent =
+    '➕ Novo Hidden Service';
+  document.getElementById('editNomeOriginal').value = '';
+  document.getElementById('sNome').value = '';
+  document.getElementById('sPortaDestino').value = '';
+  document.getElementById('sPortaVirtual').value = '80';
+  document.getElementById('sInterface').value = 'localhost';
+  document.getElementById('prevPorta').textContent = '80';
+  document.getElementById('modalServico').classList.add('show');
+}
+
+function abrirModalEditar(s) {
+  document.getElementById('modalTitulo').textContent =
+    '✏️ Editar Hidden Service';
+  document.getElementById('editNomeOriginal').value = s.nome;
+  document.getElementById('sNome').value = s.nome;
+  document.getElementById('sPortaDestino').value =
+    s.porta_destino || '';
+  document.getElementById('sPortaVirtual').value =
+    s.porta_virtual || 80;
+  document.getElementById('sInterface').value =
+    s.interface || 'localhost';
+  document.getElementById('prevPorta').textContent =
+    s.porta_virtual || 80;
+  document.getElementById('modalServico').classList.add('show');
+}
+
+function fecharModal() {
+  document.getElementById('modalServico').classList.remove('show');
+}
+
+// atualizar prévia porta
+document.getElementById('sPortaVirtual')
+  ?.addEventListener('input', function() {
+    document.getElementById('prevPorta').textContent =
+      this.value || '80';
+  });
+
+async function salvarServico() {
+  const nomeOriginal = document.getElementById('editNomeOriginal').value;
+  const nome  = document.getElementById('sNome').value.trim();
+  const pv    = document.getElementById('sPortaVirtual').value;
+  const pd    = document.getElementById('sPortaDestino').value;
+  const iface = document.getElementById('sInterface').value;
+
+  if(!nome)  { toast('Nome obrigatório','error'); return; }
+  if(!pd)    { toast('Porta local obrigatória','error'); return; }
+
+  const url  = nomeOriginal ? '/api/tor/editar_servico'
+                             : '/api/tor/adicionar_servico';
+  const body = nomeOriginal
+    ? { nome_original: nomeOriginal, nome_novo: nome,
+        porta_virtual: pv, porta_destino: pd, interface: iface }
+    : { nome, porta_virtual: pv, porta_destino: pd, interface: iface };
+
+  try {
+    const r = await fetch(url, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if(d.sucesso) {
+      toast(d.mensagem, 'success');
+      if(d.onion && d.onion !== '(ative o Tor para gerar)') {
+        toast(`🧅 Endereço: ${d.onion}`, 'info');
+      }
+      fecharModal();
+      await carregarStatus();
+    } else {
+      toast(d.erro || 'Erro ao salvar', 'error');
+    }
+  } catch(e) {
+    toast('Erro de comunicação', 'error');
+  }
+}
+
+// ── ações de serviço ──────────────────────────────────────
+async function pausarServico(nome) {
+  try {
+    const r = await fetch('/api/tor/pausar_servico', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({nome})
+    });
+    const d = await r.json();
+    toast(d.mensagem || d.erro,
+      d.sucesso ? 'warning' : 'error');
+    if(d.sucesso) await carregarStatus();
+  } catch(e) {
+    toast('Erro de comunicação', 'error');
+  }
+}
+
+async function removerServico(nome) {
+  if(!confirm(`Remover o serviço "${nome}"?\n\nO endereço .onion será perdido permanentemente.`)) return;
+  try {
+    const r = await fetch('/api/tor/remover_servico', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({nome})
+    });
+    const d = await r.json();
+    toast(d.mensagem || d.erro,
+      d.sucesso ? 'success' : 'error');
+    if(d.sucesso) await carregarStatus();
+  } catch(e) {
+    toast('Erro de comunicação', 'error');
+  }
+}
+
+async function atualizarOnion(nome) {
+  try {
+    const r = await fetch('/api/tor/obter_onion', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({nome})
+    });
+    const d = await r.json();
+    if(d.sucesso && d.onion) {
+      await carregarStatus();
+    } else {
+      toast('Onion ainda sendo gerado, aguarde...', 'info');
+    }
+  } catch(e) {}
+}
+
+function copiarOnion(url) {
+  navigator.clipboard.writeText(url).then(() => {
+    toast('Endereço copiado!', 'success');
+  }).catch(() => {
+    toast('Não foi possível copiar', 'error');
+  });
+}
+
+// ── modal renovar ─────────────────────────────────────────
+function abrirModalRenovar(nome) {
+  document.getElementById('renovarNome').value = nome;
+  document.getElementById('renovarNomeDisplay').textContent = nome;
+  document.getElementById('modalRenovar').classList.add('show');
+}
+
+function fecharModalRenovar() {
+  document.getElementById('modalRenovar').classList.remove('show');
+}
+
+async function confirmarRenovar() {
+  const nome = document.getElementById('renovarNome').value;
+  try {
+    const r = await fetch('/api/tor/renovar_onion', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({nome})
+    });
+    const d = await r.json();
+    toast(d.mensagem || d.erro,
+      d.sucesso ? 'success' : 'error');
+    fecharModalRenovar();
+    if(d.sucesso) await carregarStatus();
+  } catch(e) {
+    toast('Erro de comunicação', 'error');
+  }
+}
+
+// fechar modais clicando fora
+['modalServico','modalRenovar'].forEach(id => {
+  document.getElementById(id).addEventListener('click', function(e) {
+    if(e.target === this) {
+      this.classList.remove('show');
+    }
+  });
+});
+
+// init
+carregarStatus();
+setInterval(carregarStatus, 20000);
+</script>
+</body>
+</html>

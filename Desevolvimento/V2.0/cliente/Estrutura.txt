@@ -1,0 +1,16 @@
+projeto/
+├── cliente.py              ← roda minimizado na bandeja
+├── gerar_icone.py          ← gera logo.png, icone.ico, favicon.ico
+├── templates/
+│   ├── login.html          ← atualizado ✅
+│   └── dashboard.html      ← atualizado ✅
+├── static/
+│   ├── xterm.js
+│   ├── xterm.css
+│   ├── logo.png            ← gerado automaticamente
+│   ├── icone.ico           ← gerado automaticamente (bandeja)
+│   └── favicon.ico         ← gerado automaticamente (navegador)
+└── dados/
+    ├── sessao/
+    ├── config/
+    └── logs/

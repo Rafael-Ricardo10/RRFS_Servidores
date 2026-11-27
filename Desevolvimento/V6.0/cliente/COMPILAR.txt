@@ -1,0 +1,62 @@
+#!/bin/bash
+set -e  # para na primeira falha
+
+echo "=== Verificando se libtoxcore já está instalado ==="
+if ldconfig -p | grep -q libtoxcore; then
+    echo "libtoxcore já está presente no sistema!"
+    echo "Tentando pacote apt primeiro (mais simples)..."
+fi
+
+echo "=== Tentando instalar via APT (caminho mais fácil) ==="
+sudo apt update
+if sudo apt install -y libtoxcore2 libtoxcore-dev 2>/dev/null; then
+    echo "✅ Instalado via APT com sucesso!"
+    sudo ldconfig
+    ldconfig -p | grep toxcore
+    exit 0
+fi
+
+echo "=== Pacote apt não encontrado, compilando do código-fonte ==="
+
+# Diretório de build fixo e absoluto (evita confusão de 'cd ..')
+DIR_BUILD="$HOME/toxcore-build-tmp"
+rm -rf "$DIR_BUILD"
+mkdir -p "$DIR_BUILD"
+cd "$DIR_BUILD"
+
+echo "=== Instalando dependências de compilação ==="
+sudo apt install -y build-essential cmake pkg-config git \
+    libsodium-dev libconfig-dev python3-dev python3-pip python3-venv
+
+echo "=== Clonando c-toxcore em $DIR_BUILD ==="
+git clone https://github.com/TokTok/c-toxcore.git
+cd "$DIR_BUILD/c-toxcore"
+
+echo "=== Baixando submódulos (necessário!) ==="
+git submodule update --init --recursive
+
+echo "=== Configurando build ==="
+mkdir -p _build
+cd _build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TOXAV=OFF
+
+echo "=== Compilando (pode demorar alguns minutos) ==="
+make -j"$(nproc)"
+
+echo "=== Instalando no sistema ==="
+sudo make install
+sudo ldconfig
+
+echo "=== Verificação final ==="
+if ldconfig -p | grep -q toxcore; then
+    echo "✅ SUCESSO! libtoxcore instalada."
+    ldconfig -p | grep toxcore
+else
+    echo "❌ Falha na instalação. Verifique os erros acima."
+    exit 1
+fi
+
+echo "=== Limpando arquivos temporários ==="
+rm -rf "$DIR_BUILD"
+
+echo "=== Pronto! ==="

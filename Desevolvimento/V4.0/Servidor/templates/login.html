@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS Servidores - Login</title>
+<style>
+  :root {
+    --bg:       #0a0a0f;
+    --bg2:      #111118;
+    --bg3:      #1a1a24;
+    --border:   #2a2a3a;
+    --accent:   #4f8ef7;
+    --accent2:  #7c3aed;
+    --text:     #e2e8f0;
+    --text2:    #94a3b8;
+    --danger:   #ef4444;
+    --success:  #22c55e;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, #1a1a3e22 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, #0d2a4422 0%, transparent 50%);
+  }
+  .container {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+  }
+  .logo {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .logo-icon {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1rem;
+    box-shadow: 0 0 40px #4f8ef733;
+  }
+  .logo h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+  }
+  .logo p {
+    color: var(--text2);
+    font-size: 0.85rem;
+    margin-top: 0.3rem;
+  }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 20px 60px #00000066;
+  }
+  .ssl-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #052a1a;
+    border: 1px solid #1a5c3a;
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.78rem;
+    color: var(--success);
+    margin-bottom: 1.5rem;
+  }
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--text2);
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+  }
+  .input-wrap {
+    position: relative;
+  }
+  .input-wrap .icon {
+    position: absolute;
+    left: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text2);
+    font-size: 1rem;
+    pointer-events: none;
+  }
+  input[type="password"],
+  input[type="text"] {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.75rem 0.875rem 0.75rem 2.75rem;
+    color: var(--text);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px #4f8ef722;
+  }
+  .toggle-pass {
+    position: absolute;
+    right: 0.875rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--text2);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.2s;
+  }
+  .toggle-pass:hover { color: var(--text); }
+  .btn-login {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border: none;
+    border-radius: 10px;
+    padding: 0.875rem;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 0.5rem;
+    letter-spacing: 0.03em;
+  }
+  .btn-login:hover   { opacity: 0.9; }
+  .btn-login:active  { transform: scale(0.98); }
+  .btn-login:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  .erro {
+    background: #2a0a0a;
+    border: 1px solid #5a1a1a;
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: #f87171;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .spinner {
+    display: none;
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ffffff44;
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .footer-note {
+    text-align: center;
+    color: var(--text2);
+    font-size: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  .loading .btn-text  { display: none; }
+  .loading .spinner   { display: block; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="logo">
+    <div class="logo-icon">🛡️</div>
+    <h1>RRFS Servidores</h1>
+    <p>Sistema de Segurança de Rede</p>
+  </div>
+
+  <div class="card">
+    <div class="ssl-badge">
+      🔒 Conexão segura HTTPS (SSL/TLS)
+    </div>
+
+    {% if erro %}
+    <div class="erro">⚠️ {{ erro }}</div>
+    {% endif %}
+
+    <form method="POST" id="formLogin">
+      <div class="form-group">
+        <label for="senha">Senha do Sistema (root)</label>
+        <div class="input-wrap">
+          <span class="icon">🔑</span>
+          <input
+            type="password"
+            id="senha"
+            name="senha"
+            placeholder="Digite a senha root"
+            required
+            autofocus
+            autocomplete="current-password"
+          >
+          <button
+            type="button"
+            class="toggle-pass"
+            id="togglePass"
+            title="Mostrar/ocultar senha"
+          >👁️</button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="btnLogin">
+        <span class="btn-text">Entrar no Sistema</span>
+        <div class="spinner"></div>
+      </button>
+    </form>
+  </div>
+
+  <p class="footer-note">
+    RRFS Servidores v1.0 · Acesso restrito
+  </p>
+</div>
+
+<script>
+  // toggle mostrar senha
+  document.getElementById('togglePass').addEventListener('click', function() {
+    const inp = document.getElementById('senha');
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    this.textContent = inp.type === 'password' ? '👁️' : '🙈';
+  });
+
+  // spinner ao submeter
+  document.getElementById('formLogin').addEventListener('submit', function() {
+    const btn = document.getElementById('btnLogin');
+    btn.classList.add('loading');
+    btn.disabled = true;
+  });
+</script>
+</body>
+</html>

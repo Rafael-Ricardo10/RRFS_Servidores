@@ -1,0 +1,13 @@
+# ╔══════════════════════════════════════════════╗
+# ║   RRFS Servidores - Dependências Python      ║
+# ║   Instalar: pip3 install -r requirements.txt ║
+# ╚══════════════════════════════════════════════╝
+
+# Web Framework
+flask>=3.0.0
+
+# Segurança de sessão
+itsdangerous>=2.1.2
+
+# Utilitários Flask
+werkzeug>=3.0.0

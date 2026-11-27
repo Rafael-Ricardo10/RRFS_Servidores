@@ -1,0 +1,22 @@
+# Dependências do sistema
+sudo apt update
+sudo apt install -y build-essential cmake pkg-config git \
+    libsodium-dev libconfig-dev python3-dev python3-pip python3-venv
+
+# Baixar e compilar
+git clone https://github.com/TokTok/c-toxcore.git
+cd c-toxcore
+mkdir _build && cd _build
+
+# Tentativa 1 (sem toxav, não precisamos de áudio/vídeo)
+cmake .. -DCMAKE_BUILD_TYPE=Release -DBUILD_TOXAV=OFF
+
+# Se der erro reclamando de toxav, tente:
+# cmake .. -DCMAKE_BUILD_TYPE=Release -DMUST_BUILD_TOXAV=OFF
+
+make -j$(nproc)
+sudo make install
+sudo ldconfig
+
+# Verificar se instalou
+ldconfig -p | grep toxcore

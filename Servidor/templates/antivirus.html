@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RRFS - Antivírus</title>
+<style>
+  :root{--bg:#0a0a0f;--bg2:#111118;--bg3:#1a1a24;
+    --border:#2a2a3a;--accent:#4f8ef7;--accent2:#7c3aed;
+    --text:#e2e8f0;--text2:#94a3b8;--danger:#ef4444;
+    --success:#22c55e;--warning:#f59e0b;--nav-w:240px;}
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);
+    font-family:'Segoe UI',system-ui,sans-serif;
+    display:flex;min-height:100vh;}
+  .sidebar{width:var(--nav-w);background:var(--bg2);
+    border-right:1px solid var(--border);display:flex;
+    flex-direction:column;position:fixed;top:0;left:0;
+    height:100vh;z-index:100;overflow-y:auto;}
+  .sidebar-logo{padding:1.25rem;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;gap:0.75rem;}
+  .sidebar-logo .icon{width:40px;height:40px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+    border-radius:10px;display:flex;align-items:center;
+    justify-content:center;font-size:1.2rem;}
+  .sidebar-logo .title{font-size:0.9rem;font-weight:700;}
+  .sidebar-logo .sub{font-size:0.7rem;color:var(--text2);}
+  nav{flex:1;padding:0.75rem 0;}
+  .nav-section{font-size:0.65rem;font-weight:700;color:var(--text2);
+    letter-spacing:0.08em;text-transform:uppercase;
+    padding:0.65rem 1.25rem 0.3rem;}
+  .nav-item{display:flex;align-items:center;gap:0.65rem;
+    padding:0.6rem 1.25rem;color:var(--text2);text-decoration:none;
+    font-size:0.875rem;border-left:3px solid transparent;
+    transition:background 0.15s,color 0.15s;}
+  .nav-item:hover{background:var(--bg3);color:var(--text);}
+  .nav-item.active{background:var(--bg3);color:var(--accent);
+    border-left-color:var(--accent);}
+  .nav-item .ni{font-size:1rem;width:18px;text-align:center;}
+  .sidebar-bottom{padding:1rem 1.25rem;
+    border-top:1px solid var(--border);}
+  .btn-logout{width:100%;background:#2a0a0a;
+    border:1px solid #5a1a1a;border-radius:8px;padding:0.6rem;
+    color:#f87171;font-size:0.85rem;cursor:pointer;display:flex;
+    align-items:center;justify-content:center;gap:0.5rem;
+    text-decoration:none;}
+  .btn-logout:hover{background:#3a0a0a;}
+  .main{margin-left:var(--nav-w);flex:1;display:flex;
+    flex-direction:column;min-width:0;}
+  .topbar{background:var(--bg2);border-bottom:1px solid var(--border);
+    padding:0.875rem 1.75rem;display:flex;align-items:center;
+    justify-content:space-between;position:sticky;top:0;z-index:50;}
+  .topbar-title{font-size:1.1rem;font-weight:600;}
+  .topbar-right{display:flex;align-items:center;gap:0.75rem;}
+  .content{padding:1.5rem;flex:1;}
+  .card{background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;overflow:hidden;margin-bottom:1.25rem;}
+  .card-header{padding:0.875rem 1.25rem;
+    border-bottom:1px solid var(--border);
+    display:flex;align-items:center;
+    justify-content:space-between;flex-wrap:wrap;gap:0.5rem;}
+  .card-title{font-size:0.9rem;font-weight:600;
+    display:flex;align-items:center;gap:0.5rem;}
+  .card-body{padding:1.25rem;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);
+    gap:1rem;margin-bottom:1.25rem;}
+  .grid-2{display:grid;grid-template-columns:repeat(2,1fr);
+    gap:1rem;margin-bottom:1.25rem;}
+  .stat-card{background:var(--bg2);border:1px solid var(--border);
+    border-radius:12px;padding:1.1rem;}
+  .stat-label{font-size:0.72rem;color:var(--text2);
+    text-transform:uppercase;letter-spacing:0.05em;
+    margin-bottom:0.4rem;}
+  .stat-value{font-size:1.5rem;font-weight:700;}
+  .stat-sub{font-size:0.75rem;color:var(--text2);margin-top:0.2rem;}
+  .dot{display:inline-block;width:8px;height:8px;
+    border-radius:50%;margin-right:0.35rem;}
+  .dot-g{background:var(--success);box-shadow:0 0 6px var(--success);}
+  .dot-r{background:var(--danger);box-shadow:0 0 6px var(--danger);}
+  .dot-y{background:var(--warning);box-shadow:0 0 6px var(--warning);}
+  .btn{display:inline-flex;align-items:center;gap:0.4rem;
+    padding:0.45rem 0.9rem;border-radius:8px;font-size:0.82rem;
+    font-weight:500;cursor:pointer;border:none;
+    transition:opacity 0.2s,transform 0.1s;text-decoration:none;}
+  .btn:active{transform:scale(0.97);}
+  .btn:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-primary{background:var(--accent);color:white;}
+  .btn-success{background:#16a34a;color:white;}
+  .btn-danger{background:var(--danger);color:white;}
+  .btn-warning{background:var(--warning);color:#000;}
+  .btn-ghost{background:var(--bg3);color:var(--text2);
+    border:1px solid var(--border);}
+  .btn-ghost:hover{color:var(--text);}
+  .btn-sm{padding:0.3rem 0.65rem;font-size:0.75rem;}
+  .badge{padding:0.2rem 0.5rem;border-radius:20px;
+    font-size:0.7rem;font-weight:600;}
+  .badge-g{background:#052a1a;color:var(--success);border:1px solid #1a5c3a;}
+  .badge-r{background:#2a0a0a;color:var(--danger);border:1px solid #5a1a1a;}
+  .badge-y{background:#2a1a00;color:var(--warning);border:1px solid #5a3a00;}
+  .badge-gray{background:var(--bg3);color:var(--text2);
+    border:1px solid var(--border);}
+  .scan-box{background:var(--bg3);border:1px solid var(--border);
+    border-radius:10px;padding:1rem;margin-bottom:1rem;}
+  .scan-prog-bar{height:10px;background:var(--bg);
+    border-radius:5px;overflow:hidden;margin:0.5rem 0;}
+  .scan-prog-fill{height:100%;background:linear-gradient(
+    90deg,var(--accent),var(--accent2));
+    border-radius:5px;animation:scanprog 1.5s ease-in-out infinite;}
+  .scan-prog-fill.det{animation:none;transition:width .5s;}
+  @keyframes scanprog{
+    0%{width:5%} 50%{width:90%} 100%{width:5%}}
+  .q-item{background:var(--bg3);border:1px solid var(--border);
+    border-radius:10px;padding:0.875rem;margin-bottom:0.65rem;}
+  .q-header{display:flex;align-items:flex-start;
+    justify-content:space-between;gap:0.75rem;flex-wrap:wrap;}
+  .q-nome{font-weight:600;font-size:0.875rem;word-break:break-all;}
+  .q-virus{color:var(--danger);font-size:0.78rem;
+    margin-top:0.2rem;word-break:break-all;}
+  .q-meta{font-size:0.75rem;color:var(--text2);margin-top:0.3rem;}
+  .q-actions{display:flex;gap:0.4rem;margin-top:0.65rem;}
+  .path-tag{display:inline-flex;align-items:center;gap:0.4rem;
+    background:var(--bg3);border:1px solid var(--border);
+    border-radius:6px;padding:0.3rem 0.65rem;font-size:0.78rem;
+    font-family:monospace;margin:0.2rem;word-break:break-all;}
+  .path-tag button{background:none;border:none;color:var(--danger);
+    cursor:pointer;font-size:0.9rem;padding:0;}
+  .ctrl-bar{display:flex;align-items:center;gap:0.75rem;
+    padding:0.875rem 1.25rem;background:var(--bg3);
+    border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .switch{position:relative;display:inline-block;
+    width:44px;height:24px;}
+  .switch input{opacity:0;width:0;height:0;}
+  .slider{position:absolute;cursor:pointer;top:0;left:0;
+    right:0;bottom:0;background:var(--border);
+    border-radius:24px;transition:.3s;}
+  .slider:before{position:absolute;content:"";height:18px;
+    width:18px;left:3px;bottom:3px;background:white;
+    border-radius:50%;transition:.3s;}
+  input:checked+.slider{background:var(--success);}
+  input:checked+.slider:before{transform:translateX(20px);}
+  .spin{width:16px;height:16px;border:2px solid var(--border);
+    border-top-color:var(--accent);border-radius:50%;
+    animation:spin 0.8s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .oculto{display:none !important;}
+  #tw{position:fixed;bottom:1.5rem;right:1.5rem;
+    display:flex;flex-direction:column;gap:0.5rem;z-index:9999;}
+  .toast{background:var(--bg2);border:1px solid var(--border);
+    border-radius:10px;padding:0.75rem 1rem;font-size:0.82rem;
+    min-width:260px;max-width:360px;display:flex;
+    align-items:center;gap:0.65rem;
+    box-shadow:0 8px 32px #00000066;animation:si 0.3s ease;}
+  @keyframes si{
+    from{transform:translateX(110%);opacity:0;}
+    to{transform:translateX(0);opacity:1;}}
+  .toast.success{border-color:#1a5c3a;}
+  .toast.error{border-color:#5a1a1a;}
+  .toast.warning{border-color:#5a3a00;}
+  @media(max-width:768px){
+    .sidebar{display:none;}.main{margin-left:0;}
+    .grid-3,.grid-2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="icon">🛡️</div>
+    <div><div class="title">RRFS Servidores</div>
+    <div class="sub">v2.5 - Segurança de Rede</div></div>
+  </div>
+  <nav>
+    <div class="nav-section">Principal</div>
+    <a class="nav-item" href="/dashboard"><span class="ni">📊</span>Dashboard</a>
+    <div class="nav-section">Firewall & Acesso Remoto</div>
+    <a class="nav-item" href="/firewall"><span class="ni">🔥</span>Firewall UFW</a>
+    <a class="nav-item" href="/tox"><span class="ni">📡</span>Acesso Remoto Tox</a>
+    <a class="nav-item" href="/tor"><span class="ni">🧅</span>Tor Hidden Services</a>
+    <div class="nav-section">Proteção</div>
+    <a class="nav-item" href="/dns"><span class="ni">🔍</span>DNS Seguro</a>
+    <a class="nav-item active" href="/antivirus"><span class="ni">🦠</span>Antivírus</a>
+    <a class="nav-item" href="/selinux"><span class="ni">🔒</span>AppArmor</a>
+  </nav>
+  <div class="sidebar-bottom">
+    <a href="/logout" class="btn-logout">🚪 Sair</a>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title">🦠 Antivírus (ClamAV)</div>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="carregarStatus()">🔄 Atualizar</button>
+    </div>
+  </div>
+
+  <div class="ctrl-bar">
+    <div id="avCtrlStatus" style="font-size:0.875rem;font-weight:600;display:flex;align-items:center;gap:0.4rem;">
+      <span class="spin"></span> Verificando...
+    </div>
+    <button class="btn btn-success oculto" id="btnInstalar" onclick="instalarAV()">📦 Instalar ClamAV</button>
+    <button class="btn btn-ghost oculto" id="btnAtualizarDB" onclick="atualizarDB()">🔄 Atualizar Banco de Vírus</button>
+  </div>
+
+  <div class="content">
+    <div class="grid-3">
+      <div class="stat-card">
+        <div class="stat-label">ClamAV</div>
+        <div class="stat-value" id="av-st">--</div>
+        <div class="stat-sub" id="av-versao">--</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Assinaturas de Vírus</div>
+        <div class="stat-value" id="av-sigs">--</div>
+        <div class="stat-sub" id="av-upd">Última atualização: --</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Quarentena</div>
+        <div class="stat-value" id="av-q-total">--</div>
+        <div class="stat-sub" id="av-scan-info">--</div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚙️ Daemon ClamAV (clamd)</div>
+          <label class="switch" title="Ativar/desativar o daemon">
+            <input type="checkbox" id="switchRT" onchange="toggleProtecaoRT()">
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div class="card-body">
+          <p style="font-size:0.82rem;color:var(--text2);margin-bottom:0.875rem;">
+            O daemon deixa as varreduras muito mais rápidas e é usado nos scans
+            manuais e agendados. Ele <strong>não</strong> monitora arquivos no
+            momento em que são acessados: arquivos novos são verificados nos
+            scans (agendados às 2h diário e domingo às 3h).
+          </p>
+          <div style="display:flex;flex-direction:column;gap:0.5rem;font-size:0.8rem;">
+            <div style="display:flex;justify-content:space-between;padding:0.4rem;background:var(--bg3);border-radius:6px;">
+              <span>Daemon ClamAV</span><span id="rt-daemon">--</span></div>
+            <div style="display:flex;justify-content:space-between;padding:0.4rem;background:var(--bg3);border-radius:6px;">
+              <span>Último Scan Completo</span><span id="rt-scan-c">--</span></div>
+            <div style="display:flex;justify-content:space-between;padding:0.4rem;background:var(--bg3);border-radius:6px;">
+              <span>Último Scan Estratégico/Personalizado</span><span id="rt-scan-d">--</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">🔍 Iniciar Scan</div></div>
+        <div class="card-body">
+          <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:0.875rem;">
+            <button class="btn btn-primary scan-btn" onclick="iniciarScan('/','completo')">
+              🔍 Scan Completo (sistema todo)
+            </button>
+            <button class="btn btn-ghost scan-btn" onclick="iniciarScan('/','estrategico')">
+              ⚡ Scan Estratégico (pastas monitoradas)
+            </button>
+            <div style="display:flex;gap:0.5rem;">
+              <input type="text" id="scanCaminho" placeholder="/caminho/personalizado"
+                style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+                padding:0.5rem;color:var(--text);font-size:0.82rem;outline:none;"
+                onkeydown="if(event.key==='Enter')iniciarScanCustom()">
+              <button class="btn btn-ghost scan-btn" onclick="iniciarScanCustom()">📁 Scan</button>
+            </div>
+          </div>
+
+          <div id="scanProgress" class="oculto">
+            <div class="scan-box">
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.4rem;">
+                <div style="display:flex;align-items:center;gap:0.5rem;">
+                  <span class="spin" style="width:14px;height:14px;border-width:2px"></span>
+                  <span style="font-size:0.82rem;font-weight:600">Scan em andamento...</span>
+                </div>
+                <button class="btn btn-danger btn-sm" id="btnCancelar" onclick="cancelarScan()">⏹ Cancelar</button>
+              </div>
+              <div class="scan-prog-bar"><div class="scan-prog-fill" id="scanFill"></div></div>
+              <div id="scanInfo" style="font-size:0.75rem;color:var(--text2)">Iniciando...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">📁 Pastas Monitoradas</div></div>
+      <div class="card-body">
+        <div class="small" style="font-size:0.75rem;color:var(--text2);margin-bottom:0.5rem">
+          Usadas no "Scan Estratégico" e nos scans agendados.
+        </div>
+        <div id="caminhosTags" style="margin-bottom:0.75rem;min-height:2rem;"></div>
+        <div style="display:flex;gap:0.5rem;">
+          <input type="text" id="novoCaminho" placeholder="/novo/caminho"
+            style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;
+            padding:0.55rem 0.875rem;color:var(--text);font-size:0.875rem;outline:none;"
+            onkeydown="if(event.key==='Enter')adicionarCaminho()">
+          <button class="btn btn-primary" onclick="adicionarCaminho()">+ Adicionar</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title" id="qTitulo">🔒 Quarentena (0)</div>
+        <button class="btn btn-ghost" onclick="carregarQuarentena()">🔄 Atualizar</button>
+      </div>
+      <div class="card-body" id="quarentenaLista">
+        <div style="text-align:center;padding:2rem;color:var(--text2)">Carregando...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="tw"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const PADRAO=['/tmp','/var/tmp','/home','/root'];
+let scanInterval=null,INSTALADO=false;
+
+// nomes de arquivo/erros vêm do disco: nunca usar innerHTML com eles
+function toast(msg,tipo='info'){
+  const ic={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
+  const el=document.createElement('div');
+  el.className='toast '+tipo;
+  const a=document.createElement('span');a.textContent=ic[tipo]||'ℹ️';
+  const b=document.createElement('span');b.textContent=msg;
+  el.append(a,b);$('tw').appendChild(el);
+  setTimeout(()=>el.remove(),6000);
+}
+
+async function post(url,corpo){
+  const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo||{})});
+  return r.json();
+}
+
+function travarScans(travar){
+  document.querySelectorAll('.scan-btn').forEach(b=>b.disabled=travar||!INSTALADO);
+}
+
+async function carregarStatus(){
+  try{
+    const d=await (await fetch('/api/antivirus/status')).json();
+    if(!d.sucesso)return;
+    const inst=!!d.instalado,daemon=!!d.daemon_ativo;
+    INSTALADO=inst;
+
+    $('avCtrlStatus').innerHTML=
+      `<span class="dot ${inst?daemon?'dot-g':'dot-y':'dot-r'}"></span>
+       <strong>${inst?daemon?'Daemon ativo':'Instalado (daemon parado)':'Não Instalado'}</strong>`;
+    $('btnInstalar').classList.toggle('oculto',inst);
+    $('btnAtualizarDB').classList.toggle('oculto',!inst);
+
+    $('av-st').innerHTML=`<span class="dot ${inst?'dot-g':'dot-r'}"></span>${inst?'Instalado':'Não instalado'}`;
+    $('av-versao').textContent=d.banco_virus||'--';
+    $('av-sigs').textContent=d.assinaturas?Number(d.assinaturas).toLocaleString():'--';
+    $('av-upd').textContent='Atualizado: '+(d.ultima_atualizacao||'--');
+    $('av-q-total').textContent=d.quarentena_total||0;
+    $('av-scan-info').textContent=d.scan_ativo?'Scan em andamento...':'Último completo: '+(d.ultimo_scan_completo||'Nunca');
+
+    $('switchRT').checked=!!d.protecao_tempo_real;
+    $('switchRT').disabled=!inst;
+    $('rt-daemon').innerHTML=`<span class="badge ${daemon?'badge-g':'badge-gray'}">${daemon?'Rodando':'Parado'}</span>`;
+    $('rt-scan-c').textContent=d.ultimo_scan_completo||'Nunca';
+    $('rt-scan-d').textContent=d.ultimo_scan_diario||'Nunca';
+
+    renderizarCaminhos(d.caminhos_extras||[]);
+    travarScans(!!d.scan_ativo);
+
+    if(d.scan_ativo){iniciarMonitor();}
+    else if(!scanInterval){$('scanProgress').classList.add('oculto');}
+
+    await carregarQuarentena();
+  }catch(e){console.error('Erro av status:',e);}
+}
+
+function renderizarCaminhos(extras){
+  const todos=[...new Set([...PADRAO,...extras])];
+  $('caminhosTags').innerHTML=todos.map(p=>{
+    const removivel=extras.includes(p);
+    return `<span class="path-tag">${esc(p)}${removivel
+      ?`<button data-rem="${esc(p)}" title="Remover">×</button>`
+      :'<span style="color:var(--text2);font-size:0.65rem"> (padrão)</span>'}</span>`;
+  }).join('');
+}
+$('caminhosTags').addEventListener('click',ev=>{
+  const b=ev.target.closest('button[data-rem]');
+  if(b)removerCaminho(b.dataset.rem);
+});
+
+async function adicionarCaminho(){
+  const p=$('novoCaminho').value.trim();
+  if(!p)return;
+  try{
+    const d=await post('/api/antivirus/caminhos',{acao:'adicionar',caminho:p});
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso){$('novoCaminho').value='';await carregarStatus();}
+  }catch(e){toast('Erro de comunicação','error');}
+}
+async function removerCaminho(p){
+  try{
+    const d=await post('/api/antivirus/caminhos',{acao:'remover',caminho:p});
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso)await carregarStatus();
+  }catch(e){toast('Erro de comunicação','error');}
+}
+
+async function instalarAV(){
+  const btn=$('btnInstalar');
+  btn.disabled=true;btn.textContent='⏳ Instalando...';
+  toast('Instalando ClamAV e baixando o banco de vírus (pode levar vários minutos)...','info');
+  try{
+    const d=await post('/api/antivirus/instalar');
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso)await carregarStatus();
+  }catch(e){toast('Erro de comunicação (a instalação pode continuar em segundo plano)','error');}
+  btn.disabled=false;btn.textContent='📦 Instalar ClamAV';
+}
+
+async function atualizarDB(){
+  const btn=$('btnAtualizarDB');
+  btn.disabled=true;btn.textContent='⏳ Atualizando...';
+  toast('Atualizando banco de vírus...','info');
+  try{
+    const d=await post('/api/antivirus/atualizar_db');
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso)await carregarStatus();
+  }catch(e){toast('Erro de comunicação','error');}
+  btn.disabled=false;btn.textContent='🔄 Atualizar Banco de Vírus';
+}
+
+async function toggleProtecaoRT(){
+  const ativo=$('switchRT').checked;
+  $('switchRT').disabled=true;
+  if(ativo)toast('Iniciando o daemon (pode levar até 2 minutos em placas lentas)...','info');
+  try{
+    const d=await post('/api/antivirus/protecao_tempo_real',{ativo});
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(!d.sucesso)$('switchRT').checked=!ativo;
+  }catch(e){toast('Erro de comunicação','error');$('switchRT').checked=!ativo;}
+  $('switchRT').disabled=false;
+  carregarStatus();
+}
+
+// ── scan ──
+async function iniciarScan(caminho,tipo){
+  try{
+    const d=await post('/api/antivirus/escanear',{caminho,tipo});
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso){
+      travarScans(true);
+      $('scanInfo').textContent='Iniciando...';
+      iniciarMonitor();
+    }
+  }catch(e){toast('Erro de comunicação','error');}
+}
+function iniciarScanCustom(){
+  const p=$('scanCaminho').value.trim();
+  if(!p){toast('Digite um caminho','error');return;}
+  iniciarScan(p,'personalizado');
+}
+async function cancelarScan(){
+  $('btnCancelar').disabled=true;
+  try{
+    const d=await post('/api/antivirus/cancelar');
+    toast(d.mensagem||d.erro,d.sucesso?'warning':'error');
+  }catch(e){toast('Erro de comunicação','error');}
+}
+
+function iniciarMonitor(){
+  $('scanProgress').classList.remove('oculto');
+  $('btnCancelar').disabled=false;
+  if(!scanInterval){
+    scanInterval=setInterval(monitorarScan,2500);
+    monitorarScan();
+  }
+}
+
+async function monitorarScan(){
+  try{
+    const d=await (await fetch('/api/antivirus/scan_status')).json();
+    const prog=String(d.progresso||'');
+    const m=prog.match(/^(\d+)\/(\d+)$/);
+    const fill=$('scanFill');
+    if(m&&+m[2]>0){
+      fill.classList.add('det');
+      fill.style.width=Math.min(100,Math.round(+m[1]*100/+m[2]))+'%';
+    }else{
+      fill.classList.remove('det');fill.style.width='';
+    }
+    if(d.ativo){
+      $('scanInfo').textContent=
+        `${prog||'...'} · Ameaças: ${d.ameacas_encontradas||0} · Erros de leitura: ${d.erros||0}`;
+      return;
+    }
+    // terminou
+    clearInterval(scanInterval);scanInterval=null;
+    $('scanProgress').classList.add('oculto');
+    travarScans(false);
+    const resumo=`Ameaças: ${d.ameacas_encontradas||0} · Arquivos verificados: ${d.arquivos_verificados||0} · Erros de leitura: ${d.erros||0}`;
+    if(prog.startsWith('erro'))toast(prog,'error');
+    else if(prog==='cancelado')toast('Scan cancelado. '+resumo,'warning');
+    else toast('Scan concluído. '+resumo,(d.ameacas_encontradas>0)?'warning':'success');
+    await carregarStatus();
+  }catch(e){}
+}
+
+// ── quarentena ──
+function formatarBytes(b){
+  if(b<1024)return b+'B';
+  if(b<1048576)return (b/1024).toFixed(1)+'KB';
+  return (b/1048576).toFixed(1)+'MB';
+}
+
+async function carregarQuarentena(){
+  try{
+    const d=await (await fetch('/api/antivirus/quarentena')).json();
+    const lista=d.quarentena||[];
+    $('qTitulo').textContent=`🔒 Quarentena (${lista.length})`;
+    const el=$('quarentenaLista');
+    if(!lista.length){
+      el.innerHTML='<p style="text-align:center;color:var(--text2);padding:2rem;font-size:0.85rem">✅ Quarentena vazia. Nenhuma ameaça detectada.</p>';
+      return;
+    }
+    el.innerHTML=lista.map(q=>{
+      const semOrigem=!q.arquivo_orig;
+      return `<div class="q-item">
+        <div class="q-header"><div>
+          <div class="q-nome">🦠 ${esc(q.arquivo_orig||'Origem desconhecida (scan agendado)')}</div>
+          <div class="q-virus">Vírus: ${esc(q.virus||'Desconhecido')}</div>
+          <div class="q-meta">Tamanho: ${formatarBytes(q.tamanho||0)} · Detectado: ${esc((q.data||'--').slice(0,16).replace('T',' '))}</div>
+        </div></div>
+        <div class="q-actions">
+          <button class="btn btn-warning btn-sm" data-q="${esc(q.id)}" data-a="restaurar" ${semOrigem?'disabled title="Origem desconhecida: não é possível restaurar automaticamente"':''}>↩️ Falso Positivo</button>
+          <button class="btn btn-danger btn-sm" data-q="${esc(q.id)}" data-a="remover">🗑️ Remover</button>
+        </div></div>`;
+    }).join('');
+  }catch(e){console.error('Erro quarentena:',e);}
+}
+$('quarentenaLista').addEventListener('click',ev=>{
+  const b=ev.target.closest('button[data-q]');
+  if(!b||b.disabled)return;
+  if(b.dataset.a==='restaurar')restaurarQ(b.dataset.q);
+  else removerQ(b.dataset.q);
+});
+
+async function restaurarQ(id){
+  if(!confirm('Restaurar o arquivo? Use apenas se tiver certeza de que é um falso positivo (ele não será mais verificado).'))return;
+  try{
+    const d=await post('/api/antivirus/restaurar',{id});
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso)await carregarQuarentena();
+  }catch(e){toast('Erro de comunicação','error');}
+}
+async function removerQ(id){
+  if(!confirm('Remover permanentemente da quarentena?'))return;
+  try{
+    const d=await post('/api/antivirus/remover_quarentena',{id});
+    toast(d.mensagem||d.erro,d.sucesso?'success':'error');
+    if(d.sucesso)await carregarQuarentena();
+  }catch(e){toast('Erro de comunicação','error');}
+}
+
+carregarStatus();
+setInterval(carregarStatus,15000);
+</script>
+</body>
+</html>

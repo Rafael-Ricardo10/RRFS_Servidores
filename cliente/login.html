@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RRFS Servidores - Login</title>
+<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+<style>
+  body{background:#121212;color:#eee;font-family:Segoe UI,Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;}
+  .caixa{background:#1e1e1e;padding:30px;border-radius:10px;width:460px;box-shadow:0 0 20px rgba(0,0,0,.5);}
+  .cabecalho{display:flex;align-items:center;gap:12px;margin-bottom:6px;}
+  .cabecalho img{height:52px;width:52px;border-radius:12px;box-shadow:0 0 0 1px #333;}
+  .cabecalho .nomes{display:flex;flex-direction:column;}
+  .cabecalho h1{margin:0;color:#4fd1c5;font-size:20px;}
+  .cabecalho span{font-size:12px;color:#888;}
+  h2{margin:18px 0 4px;color:#4fd1c5;font-size:16px;font-weight:600;}
+  textarea{width:100%;background:#2a2a2a;color:#eee;border:1px solid #444;border-radius:6px;padding:10px;min-height:70px;font-family:monospace;box-sizing:border-box;}
+  button{margin-top:12px;width:100%;padding:10px;background:#4fd1c5;border:none;border-radius:6px;color:#111;font-weight:bold;cursor:pointer;font-size:14px;}
+  button:hover{background:#3fc2b5;}
+  .erro{color:#ff6b6b;margin-top:10px;font-size:13px;}
+  p{font-size:13px;color:#999;}
+</style>
+</head>
+<body>
+<div class="caixa">
+  <div class="cabecalho">
+    <img src="/static/logo.png" alt="RRFS Servidores">
+    <div class="nomes">
+      <h1>RRFS Servidores</h1>
+      <span>Acesso remoto via protocolo Tox</span>
+    </div>
+  </div>
+  <h2>🔑 Conectar ao Servidor (Tox)</h2>
+  <p>Cole o ID Tox (76 caracteres) exibido no painel do servidor:</p>
+  <textarea id="endereco" placeholder="Endereço Tox (hex)..." autocomplete="off" onkeydown="if(event.key==='Enter'&&event.ctrlKey)entrar()"></textarea>
+  <button onclick="entrar()">Conectar</button>
+  <div class="erro" id="erro"></div>
+</div>
+<script>
+async function entrar(){
+  const endereco = document.getElementById('endereco').value.trim();
+  const erroDiv = document.getElementById('erro'); erroDiv.textContent = '';
+  try{
+    const resp = await fetch('/api/login', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({endereco})});
+    const dados = await resp.json();
+    if(dados.ok){ window.location.href = '/'; } else { erroDiv.textContent = dados.erro || 'Falha'; }
+  }catch(e){ erroDiv.textContent = 'Erro: ' + e; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# RRFS Servidores v2.0 - Dependências Python
+# Instalar: pip3 install -r requirements.txt
+
+# Web Framework
+flask>=3.0.0
+
+# Segurança
+itsdangerous>=2.1.2
+werkzeug>=3.0.0
+
+# Utilitários
+packaging>=23.0

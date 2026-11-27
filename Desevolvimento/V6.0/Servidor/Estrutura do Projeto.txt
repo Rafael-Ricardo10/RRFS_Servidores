@@ -1,0 +1,22 @@
+/
+├── app.py                          # Principal - Flask HTTPS porta 2000
+├── modulos/
+│   ├── firewall_ufw.py            # Módulo UFW (adaptado)
+│   ├── tor_manager.py             # Módulo Tor (adaptado)
+│   ├── conexao.py                 # Módulo Conexão (adaptado)
+│   └── utils.py                   # Utilitários compartilhados
+├── dados/
+│   ├── ssl/                       # Certificados SSL
+│   ├── regras_ufw.json
+│   ├── tor_config.json
+│   └── conexao/
+│       ├── vpns/
+│       ├── config.json
+│       ├── vpns.json
+│       └── wifis.json
+└── templates/
+    ├── login.html
+    ├── dashboard.html
+    ├── firewall.html
+    ├── tor.html
+    └── conexao.html
